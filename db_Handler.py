@@ -3,7 +3,7 @@ import vecs
 import json
 from dotenv import load_dotenv
 import os
-
+import supabase
 
 class DbHandler:
   def __init__(self):
@@ -20,6 +20,26 @@ class DbHandler:
 
     # Initialise Supabase Vector Store Client
     self.vec_client = vecs.Client(os.getenv("DB_CONNECTION"))
+
+    # Initialise Supabase Main Database Client
+    self.db_client = supabase.create_client(
+      os.getenv("SUPABASE_URL"), 
+      os.getenv("SUPABASE_KEY")
+    )
+
+  
+  # *****************************
+  # Returns an array of the top k similar sentences to query 
+  # *****************************
+  def get_users(self):
+    response = (self.db_client.table("user_profile")
+                .select("id, username")
+                .execute()
+                .model_dump_json())
+    
+    data = json.loads(response)["data"] 
+    return data
+
 
 
   # *****************************
@@ -50,11 +70,3 @@ class DbHandler:
     print("Queried Results! Returning as array")
 
     return results
-
-
-if __name__ == "__main__":
-  db = DbHandler()
-
-  res = db.query_try("money", 10)
-  for r in res:
-    print(r)

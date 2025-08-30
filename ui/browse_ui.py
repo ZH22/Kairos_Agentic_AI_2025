@@ -2,6 +2,7 @@ import streamlit as st
 from commons import categories_list
 
 def display():
+
     st.title("Browse Listings")
 
     if len(st.session_state.listings) == 0:
@@ -48,6 +49,7 @@ def display():
             st.caption(f"Category: {item['category']}")
             st.caption(f"Condition: {item.get('condition', 'Not specified')}")
             st.caption(f"Posted on: {item['date_posted'].strftime('%Y-%m-%d %H:%M:%S')}")
+            st.caption(f"by: {item.get('user')}")
             st.write(item["description"])
             st.markdown("---")
 

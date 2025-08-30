@@ -1,3 +1,5 @@
+import streamlit as st
+
 # Predefined categories
 categories_list = [
     "Accomodation",
@@ -9,3 +11,11 @@ categories_list = [
     "Tech and Gadgets",
     "Textbooks and Study Materials"
 ]
+
+# ---------- 1.  one-time initialisation ----------
+def init_keys():
+    if "listings" not in st.session_state:
+        st.session_state.listings = []  # Each listing: dict with keys
+
+    if "user" not in st.session_state:
+        st.session_state.user = None

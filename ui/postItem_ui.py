@@ -1,9 +1,14 @@
 import streamlit as st
 from commons import categories_list
 import datetime
+from commons import categories_list
 
 def display():
+
     st.title("Post a New Item")
+
+    user = st.text_input("User", value=st.session_state.get("user"), disabled=True)
+
     title = st.text_input("Item Title")
     image = st.file_uploader("Upload Image", type=["png", "jpg", "jpeg"])
     if image:
@@ -26,11 +31,14 @@ def display():
 
     price = st.number_input("Price ($SGD)", min_value=0.0, format="%.2f")
 
-    submitted = st.button("Post Item")
+    submitted = st.button("Post Item") 
 
     if submitted:
-        if title and price and category and image:
+        
+
+        if title and price and category and image and user:
             st.session_state.listings.append({
+                "user": user,
                 "title": title,
                 "price": price,
                 "category": category,
@@ -42,4 +50,7 @@ def display():
             st.success("Item posted successfully!")
         else:
             st.error("Please fill all fields and upload an image.")
+            if(not user):
+                print(user)
+                st.error("User not defined. Please head to home to select")
 

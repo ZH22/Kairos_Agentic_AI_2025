@@ -26,3 +26,7 @@ streamlit run ui.py
 
 ```
 
+### General Idea
+- We currently provide 3 users (adam, bob, charlie)
+- Users can toggle between each user's view on the homepage
+

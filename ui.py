@@ -6,14 +6,16 @@ import datetime
 # Import UI Element Files
 import sys
 sys.path.append("ui")
+from ui.commons import init_keys
 import ui.home_ui as home_ui
 import ui.browse_ui as browse_ui
 import ui.postItem_ui as postItem_ui
 import ui.myListings_ui as myListings_ui
 
+
 # Initialize session state storage if not exists
-if "listings" not in st.session_state:
-    st.session_state.listings = []  # Each listing: dict with keys
+init_keys()
+# ====================================================================
 
 # Sidebar navigation
 st.sidebar.title("E-Commerce App")

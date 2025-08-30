@@ -7,3 +7,5 @@ strands-agents-tools
 streamlit
 boto3 
 vecs
+
+supabase
