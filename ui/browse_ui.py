@@ -16,6 +16,9 @@ def display():
         prices = [item["price"] for item in st.session_state.listings]
         if prices:
             min_price, max_price = min(prices), max(prices)
+
+            # Prevent slider issue when only one price available
+            max_price = min_price + 1 if min_price == max_price else max_price
             price_range = st.slider("Filter by Price Range ($)", min_value=float(min_price), max_value=float(max_price), value=(float(min_price), float(max_price)))
         else:
             price_range = (0.0, float("inf"))

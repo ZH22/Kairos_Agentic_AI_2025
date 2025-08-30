@@ -1,5 +1,6 @@
 import streamlit as st
 from commons import categories_list
+import datetime
 
 def display():
     st.title("Post a New Item")
@@ -23,7 +24,7 @@ def display():
     else:
         description = st.text_area("Description")
 
-    price = st.number_input("Price ($)", min_value=0.0, format="%.2f")
+    price = st.number_input("Price ($SGD)", min_value=0.0, format="%.2f")
 
     submitted = st.button("Post Item")
 
