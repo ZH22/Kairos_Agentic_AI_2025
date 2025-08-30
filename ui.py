@@ -6,10 +6,10 @@ import datetime
 # Import UI Element Files
 import sys
 sys.path.append("ui")
-import home_ui
-import browse_ui
-import postItem_ui
-import myListings_ui
+import ui.home_ui as home_ui
+import ui.browse_ui as browse_ui
+import ui.postItem_ui as postItem_ui
+import ui.myListings_ui as myListings_ui
 
 # Initialize session state storage if not exists
 if "listings" not in st.session_state:
