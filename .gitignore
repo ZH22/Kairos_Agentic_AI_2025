@@ -2,3 +2,6 @@ venv/
 
 *.swp
 .env
+
+
+*/__pycache__/*

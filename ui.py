@@ -33,3 +33,4 @@ elif page == "Post Item":
     
 # --- My Listings ---
 elif page == "My Listings":
+    myListings_ui.display()
