@@ -5,3 +5,5 @@ strands-agents
 strands-agents-tools
 
 streamlit
+boto3 
+vecs
