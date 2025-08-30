@@ -3,3 +3,5 @@ python-dotenv
 mcp[cli]
 strands-agents
 strands-agents-tools
+
+streamlit

@@ -4,13 +4,14 @@
 2. Activate virtual environment
 
 (Supabase Portion)
-1. Create new Project 
-2. Enable 'vector' option in Database
+- Create new Project 
+- Enable 'vector' option in Database
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
 ```
 3. Add credentials
 ```
@@ -18,3 +19,10 @@ AWS_ACCESS_KEY_ID=<token>
 AWS_SECRET_ACCESS_KEY=<token>
 AWS_REGION=us-east-1
 ```
+
+### Running Project Locally
+```bash
+streamlit run ui.py
+
+```
+
