@@ -2,6 +2,9 @@ import streamlit as st
 from commons import categories_list
 
 def display():
+    # Mandatory fix: Ensure listings is initialized
+    if "listings" not in st.session_state:
+        st.session_state["listings"] = []
 
     st.title("Browse Listings")
 
@@ -14,10 +17,9 @@ def display():
         condition_filter = st.selectbox("Filter by Condition", ["All", "New", "Like New", "Used", "Heavily Used"])
 
         # Price filter
-        prices = [item["price"] for item in st.session_state.listings]
+        prices = [item.get("price", 0.0) for item in st.session_state.listings]
         if prices:
             min_price, max_price = min(prices), max(prices)
-
             # Prevent slider issue when only one price available
             max_price = min_price + 1 if min_price == max_price else max_price
             price_range = st.slider("Filter by Price Range ($)", min_value=float(min_price), max_value=float(max_price), value=(float(min_price), float(max_price)))
@@ -28,29 +30,45 @@ def display():
         sort_option = st.selectbox("Sort by", ["Default", "Price: Low to High", "Price: High to Low", "Newest", "Oldest"])
 
         filtered_items = [item for item in st.session_state.listings if (
-            (search.lower() in item["title"].lower()) and 
-            (category_filter == "All" or item["category"] == category_filter) and 
-            (condition_filter == "All" or item["condition"] == condition_filter) and
-            (price_range[0] <= item["price"] <= price_range[1])
+            (search.lower() in item.get("title", "").lower()) and 
+            (category_filter == "All" or item.get("category", "") == category_filter) and 
+            (condition_filter == "All" or item.get("condition", "") == condition_filter) and
+            (price_range[0] <= item.get("price", 0.0) <= price_range[1])
         )]
 
         if sort_option == "Price: Low to High":
-            filtered_items = sorted(filtered_items, key=lambda x: x["price"])
+            filtered_items = sorted(filtered_items, key=lambda x: x.get("price", 0.0))
         elif sort_option == "Price: High to Low":
-            filtered_items = sorted(filtered_items, key=lambda x: x["price"], reverse=True)
+            filtered_items = sorted(filtered_items, key=lambda x: x.get("price", 0.0), reverse=True)
         elif sort_option == "Newest":
-            filtered_items = sorted(filtered_items, key=lambda x: x["date_posted"], reverse=True)
+            filtered_items = sorted(filtered_items, key=lambda x: x.get("date_posted", 0), reverse=True)
         elif sort_option == "Oldest":
-            filtered_items = sorted(filtered_items, key=lambda x: x["date_posted"])
+            filtered_items = sorted(filtered_items, key=lambda x: x.get("date_posted", 0))
 
         for item in filtered_items:
-            st.image(item["image"], width=150)
-            st.subheader(f"{item['title']} - ${item['price']}")
-            st.caption(f"Category: {item['category']}")
+            # Image handling
+            if item.get("image"):
+                st.image(item["image"], width=150)
+            else:
+                st.write("No image available")
+            # Title and price
+            st.subheader(f"{item.get('title', 'No title')} - ${item.get('price', 0.0)}")
+            st.caption(f"Category: {item.get('category', 'N/A')}")
             st.caption(f"Condition: {item.get('condition', 'Not specified')}")
-            st.caption(f"Posted on: {item['date_posted'].strftime('%Y-%m-%d %H:%M:%S')}")
-            st.caption(f"by: {item.get('user')}")
-            st.write(item["description"])
+            # Date formatting
+            date_posted = item.get("date_posted")
+            if date_posted:
+                try:
+                    import datetime
+                    if isinstance(date_posted, datetime.datetime):
+                        date_posted = date_posted.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    pass
+                st.caption(f"Posted on: {date_posted}")
+            st.caption(f"by: {item.get('user', 'Unknown')}")
+            # Description handling (consistent label and spacing)
+            st.markdown("**Description:**")
+            st.markdown(item.get("description") or "No description provided")
             st.markdown("---")
 
 

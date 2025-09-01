@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 import datetime
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Import UI Element Files
 import sys
