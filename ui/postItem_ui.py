@@ -2,7 +2,7 @@ import streamlit as st
 from commons import categories_list
 
 import datetime
-from commons import categories_list
+from commons import categories_list, condition_list
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Seller_Workflow')))
@@ -24,7 +24,7 @@ def display():
         else:
             st.image(image, width=150)
     category = st.selectbox("Category", categories_list, help="Select the most relevant category.")
-    condition = st.selectbox("Condition", ["New", "Like New", "Used", "Heavily Used"], help="Describe the item's condition.")
+    condition = st.selectbox("Condition", condition_list, help="Describe the item's condition.")
     original_price = st.number_input("Original Price ($SGD)", min_value=0.0, format="%.2f", help="What did you pay for this item when new?")
     price = st.number_input("Price ($SGD)", min_value=0.0, format="%.2f", help="Your asking price.")
     age = st.number_input("Age (in months)", min_value=0, step=1, format="%d", help="How long have you used this item?")

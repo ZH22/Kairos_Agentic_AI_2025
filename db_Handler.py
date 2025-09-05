@@ -4,7 +4,9 @@ import json
 from dotenv import load_dotenv
 import os
 import supabase
+import streamlit as st
 
+@st.cache_resource
 class DbHandler:
   def __init__(self):
     # Load Environment variables for use
@@ -26,6 +28,9 @@ class DbHandler:
       os.getenv("SUPABASE_URL"), 
       os.getenv("SUPABASE_KEY")
     )
+
+  def get_listings(self):
+    respose = (self.db_client.table("listing"))
 
   
   # *****************************

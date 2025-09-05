@@ -12,6 +12,8 @@ categories_list = [
     "Textbooks and Study Materials"
 ]
 
+condition_list = ["New", "Like New", "Used", "Heavily Used"]
+
 # ---------- 1.  one-time initialisation ----------
 def init_keys():
     if "listings" not in st.session_state:
