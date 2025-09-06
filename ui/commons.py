@@ -1,4 +1,5 @@
 import streamlit as st
+from db_Handler import DbHandler
 
 # Predefined categories
 categories_list = [
@@ -12,10 +13,15 @@ categories_list = [
     "Textbooks and Study Materials"
 ]
 
+condition_list = ["New", "Like New", "Used", "Heavily Used"]
+
 # ---------- 1.  one-time initialisation ----------
 def init_keys():
     if "listings" not in st.session_state:
-        st.session_state.listings = []  # Each listing: dict with keys
+
+        # Import from external and save to local session
+        db = DbHandler()
+        st.session_state.listings = db.get_listings() # Returns an array of listing objects
 
     if "user" not in st.session_state:
         st.session_state.user = None

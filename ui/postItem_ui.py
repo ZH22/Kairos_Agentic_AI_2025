@@ -3,14 +3,16 @@ from commons import categories_list
 from demo_data import get_demo_data
 
 import datetime
-from commons import categories_list
+from commons import categories_list, condition_list
+from helper_scripts.image_helper import compress_incoming_image_file, image_to_base64
 import sys
 import os
+from db_Handler import DbHandler
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Seller_Workflow')))
 # from Collector_Polisher import Collector
 from Seller_Workflow.description_writer import Writer
 def display():
-
     st.title("Post a New Item")
     
     # Demo button
@@ -23,16 +25,20 @@ def display():
     user = st.text_input("User", value=st.session_state.get("user"), disabled=True)
     title = st.text_input("Item Title", value=st.session_state.get("demo_title", ""), help="Enter a clear, descriptive title for your item.")
     image = st.file_uploader("Upload Image (optional)", type=["png", "jpg", "jpeg"], help="Max 5MB. JPG, PNG only.")
+    small_img_bytes = None
     if image:
         if image.size > 5 * 1024 * 1024:
             st.warning("Image file is too large (max 5MB). Please upload a smaller image.")
             image = None
         else:
-            st.image(image, width=150)
+            # Compress Image and save
+            small_img_bytes = compress_incoming_image_file(image, quality=30)
+            st.image(small_img_bytes, caption="Preview Image", width=150)
+
     demo_category = st.session_state.get("demo_category", categories_list[0])
     category_index = categories_list.index(demo_category) if demo_category in categories_list else 0
     category = st.selectbox("Category", categories_list, index=category_index, help="Select the most relevant category.")
-    condition_options = ["New", "Like New", "Used", "Heavily Used"]
+    condition_options = condition_list
     demo_condition = st.session_state.get("demo_condition", "New")
     condition_index = condition_options.index(demo_condition) if demo_condition in condition_options else 0
     condition = st.selectbox("Condition", condition_options, index=condition_index, help="Describe the item's condition.")
@@ -183,9 +189,15 @@ def display():
                 "category": category,
                 "condition": condition,
                 "description": description,
-                "image": image if image else None,
+                "image": small_img_bytes if small_img_bytes else None,
                 "date_posted": datetime.datetime.now()
             }
+
+            # Save item data to external database
+            external_db_handler = DbHandler()
+            external_db_handler.save_listing_to_db(item_data)
+
+            # Save Item to local session
             st.session_state.listings.append(item_data)
             st.success("Item posted successfully!")
 

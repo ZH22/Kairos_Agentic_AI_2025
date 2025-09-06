@@ -5,6 +5,7 @@ import datetime
 import os
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv()
 
@@ -22,28 +23,73 @@ import ui.myListings_ui as myListings_ui
 init_keys()
 # ====================================================================
 
+# Sidebar navigation
 
-# Custom router logic for intermediate evaluation page
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
+# --- Custom CSS for sidebar styling ---
+st.markdown(
+    """
+    <style>
+    /* Sidebar background */
+    [data-testid="stSidebar"] {
+        background-color: #fafafa;
+        padding-top: 20px;
+    }
+    /* Navigation buttons */
+    .nav-button {
+        display: block;
+        padding: 10px 16px;
+        margin: 6px 0;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 16px;
+        color: black;
+    }
+    .nav-button:hover {
+        background-color: #f0f0f0;
+    }
+    .nav-button-selected {
+        background-color: #FF5A5F;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-def go_to(page_name):
-    st.session_state.page = page_name
-    st.rerun()
+# --- Sidebar navigation with emojis ---
+st.sidebar.title("E-Commerce App")
 
-if st.session_state.page == "evaluation":
-    import ui.evaluation_ui as evaluation_ui
-    evaluation_ui.display()
-else:
-    st.sidebar.title("E-Commerce App")
-    page = st.sidebar.radio("Go to", ["Home", "Browse", "Post Item", "My Listings"],
-                            index=["Home", "Browse", "Post Item", "My Listings"].index(st.session_state.page) if st.session_state.page in ["Home", "Browse", "Post Item", "My Listings"] else 0)
-    st.session_state.page = page
-    if page == "Home":
-        home_ui.display()
-    elif page == "Browse":
-        browse_ui.display()
-    elif page == "Post Item":
-        postItem_ui.display()
-    elif page == "My Listings":
-        myListings_ui.display()
+# Define pages
+pages = {
+    "🏠 Home": "Home",
+    "🔍 Browse": "Browse",
+    "➕ Post Item": "Post Item",
+    "👤 My Listings": "My Listings",
+}
+
+# Track active page in session state
+if "active_page" not in st.session_state:
+    st.session_state.active_page = "Home"
+
+# Render nav buttons
+for emoji_label, page_name in pages.items():
+    button_type = "nav-button-selected" if st.session_state.active_page == page_name else "nav-button"
+    if st.sidebar.button(emoji_label, key=page_name):
+        st.session_state.active_page = page_name
+
+page = st.session_state.active_page
+# --- Home ---
+if page == "Home":
+    home_ui.display()
+
+# --- Browse Page (Chat + Toggle Search Listings) ---
+elif page == "Browse":
+    browse_ui.display()
+
+# --- Post Item ---
+elif page == "Post Item":
+    postItem_ui.display()
+    
+# --- My Listings ---
+elif page == "My Listings":
+    myListings_ui.display()
