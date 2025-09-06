@@ -1,37 +1,21 @@
 import streamlit as st
 from commons import categories_list
 
+
 def display():
-    st.title("Chat with Kairos AI")
+    
     if "show_listings" not in st.session_state:
         st.session_state.show_listings = False
-
     if st.button("🔍 Search"):
         st.session_state.show_listings = not st.session_state.show_listings
 
     if not st.session_state.show_listings:
-        # Full-width chat
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = []
+        st.title("Chat with Kairos AI")
+        st.caption("This is an AI-assisted search. Chat with AI to improve search. Click twice on search button when done.")   
 
-        for role, msg in st.session_state.chat_history:
-            with st.chat_message(role):
-                st.write(msg)
-
-        if prompt := st.chat_input("Ask me anything..."):
-            st.session_state.chat_history.append(("user", prompt))
-            with st.chat_message("user"):
-                st.write(prompt)
-
-            ai_reply = f"You said: '{prompt}'. This is a stubbed AI response."
-            st.session_state.chat_history.append(("assistant", ai_reply))
-            with st.chat_message("assistant"):
-                st.write(ai_reply)
-    else:
-        # Two-column layout when search is active
-        col1, col2 = st.columns([2, 2])
-
-        with col1:
+        prompt = st.chat_input("Ask me anything...")
+        with st.container(height = 200) as chat_history:
+            # Full-width chat
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
 
@@ -39,7 +23,7 @@ def display():
                 with st.chat_message(role):
                     st.write(msg)
 
-            if prompt := st.chat_input("Ask me anything..."):
+            if prompt:
                 st.session_state.chat_history.append(("user", prompt))
                 with st.chat_message("user"):
                     st.write(prompt)
@@ -48,6 +32,29 @@ def display():
                 st.session_state.chat_history.append(("assistant", ai_reply))
                 with st.chat_message("assistant"):
                     st.write(ai_reply)
+    else:
+        st.set_page_config(layout="wide")
+        # Two-column layout when search is active
+        col1, col2 = st.columns([0.3, 0.7])
+
+        with col1:
+            st.subheader("Chat with Kairos AI")
+
+            prompt = st.chat_input("Ask me anything...")
+            with st.container(height = 200):
+                for role, msg in st.session_state.chat_history:
+                    with st.chat_message(role):
+                        st.write(msg)
+
+                if prompt:
+                    st.session_state.chat_history.append(("user", prompt))
+                    with st.chat_message("user"):
+                        st.write(prompt)
+
+                    ai_reply = f"You said: '{prompt}'. This is a stubbed AI response."
+                    st.session_state.chat_history.append(("assistant", ai_reply))
+                    with st.chat_message("assistant"):
+                        st.write(ai_reply)
 
         with col2:
             st.subheader("Available Listings")
