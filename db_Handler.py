@@ -6,6 +6,8 @@ import os
 import supabase
 import streamlit as st
 from helper_scripts.image_helper import image_to_base64
+from datetime import datetime
+import base64
 
 @st.cache_resource
 class DbHandler:
@@ -72,11 +74,27 @@ class DbHandler:
         return user_id
     else:
         print(f"User with username '{username}' not found.")
-
+    
+  def get_username_from_id(self, user_id):
+    res = self.db_client.table("user_profile").select("username").eq("id", user_id).execute()
+    return res.data[0]["username"]
 
   def get_listings(self):
-    respose = (self.db_client.table("listing"))
+    res = (self.db_client.table("listing").select("*").execute())
+    listings = res.data
 
+    # Convert back to session state style
+    for item in listings:
+      item['user'] = self.get_username_from_id(item['user']).title()
+      item['date_posted'] = datetime.fromisoformat(item['created_at']).strftime("%d %B %Y, %H:%M")
+      del item['created_at']
+      item['price_negotiable'] = "Yes" if item['price_negotiable'] else "No"
+      item['university'] = item['university'].title()
+      item['delivery_option'] = item['delivery_option'].replace('_', ' ').title()
+      item['image'] = base64.b64decode(item['image_base64'])
+      del item['image_base64']
+
+    return listings
   
   # *****************************
   # Returns an array of the top k similar sentences to query 
@@ -89,8 +107,6 @@ class DbHandler:
     
     data = json.loads(response)["data"] 
     return data
-
-
 
   # *****************************
   # Returns an array of the top k similar sentences to query 
