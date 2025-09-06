@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import supabase
 import streamlit as st
+from helper_scripts.image_helper import image_to_base64
 
 @st.cache_resource
 class DbHandler:
@@ -28,6 +29,50 @@ class DbHandler:
       os.getenv("SUPABASE_URL"), 
       os.getenv("SUPABASE_KEY")
     )
+
+  def save_listing_to_db(self, listing_object):
+    # Create a copy for use
+    data = listing_object.copy()
+
+    # Get user id
+    username = listing_object["user"]
+    userid = self.get_userid_from_username(username)
+
+    # Change image to base64 
+    image = listing_object["image"]
+    b64_img = image_to_base64(image).decode('utf-8')
+
+    # Change boolean values
+    data['price_negotiable'] = data['price_negotiable'] == 'Yes'
+
+    # Change Enum Values (format by lowercased, underscore seperated)
+    data['university'] = data['university'].lower().replace(" ", "_")
+    data['category'] = data['category'].lower().replace(" ", "_")
+    data['condition'] = data['condition'].lower().replace(" ", "_")
+    data['delivery_option'] = data['delivery_option'].lower().replace(" ", "_")
+
+
+    # Remove image, date_posted, user fields
+    del data['image']
+    del data['date_posted']
+    data['user'] = userid
+    data['image_base64'] = b64_img 
+
+    # Modify to image_base64, user -> userid
+    response = (self.db_client.table("listing")
+                .insert(data)
+                .execute())
+
+  def get_userid_from_username(self, username):
+    resp = self.db_client.table("user_profile").select("id").eq("username", username).execute()
+
+    if resp.data:
+        user_id = resp.data[0]["id"]
+        print(f"User ID for {username}: {user_id}")
+        return user_id
+    else:
+        print(f"User with username '{username}' not found.")
+
 
   def get_listings(self):
     respose = (self.db_client.table("listing"))

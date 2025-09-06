@@ -3,14 +3,15 @@ from commons import categories_list
 
 import datetime
 from commons import categories_list, condition_list
-from helper_scripts.image_helper import compress_incoming_image_file
+from helper_scripts.image_helper import compress_incoming_image_file, image_to_base64
 import sys
 import os
+from db_Handler import DbHandler
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Seller_Workflow')))
 # from Collector_Polisher import Collector
 from Seller_Workflow.description_writer import Writer
 def display():
-
     st.title("Post a New Item")
 
     user = st.text_input("User", value=st.session_state.get("user"), disabled=True)
@@ -147,6 +148,12 @@ def display():
                 "image": small_img_bytes if small_img_bytes else None,
                 "date_posted": datetime.datetime.now()
             }
+
+            # Save item data to external database
+            external_db_handler = DbHandler()
+            external_db_handler.save_listing_to_db(item_data)
+
+            # Save Item to local session
             st.session_state.listings.append(item_data)
             st.success("Item posted successfully!")
 
