@@ -1,8 +1,22 @@
 import streamlit as st
 from commons import categories_list
+from browse_ai import generate_ai_response
+from db_Handler import DbHandler
 
 
 def display():
+    # Initialize database handler
+    db = DbHandler()
+    
+    # Auto-refresh on page load
+    if "page_loaded_browse" not in st.session_state:
+        st.session_state.listings = db.get_listings()
+        st.session_state.page_loaded_browse = True
+    
+    # Keep manual refresh button as backup
+    if st.button("🔄 Refresh Listings"):
+        st.session_state.listings = db.get_listings()
+        st.success("Listings refreshed from database!")
     
     if "show_listings" not in st.session_state:
         st.session_state.show_listings = False
@@ -28,7 +42,7 @@ def display():
                 with st.chat_message("user"):
                     st.write(prompt)
 
-                ai_reply = f"You said: '{prompt}'. This is a stubbed AI response."
+                ai_reply = generate_ai_response(prompt, st.session_state.get("listings", []))
                 st.session_state.chat_history.append(("assistant", ai_reply))
                 with st.chat_message("assistant"):
                     st.write(ai_reply)
@@ -51,7 +65,7 @@ def display():
                     with st.chat_message("user"):
                         st.write(prompt)
 
-                    ai_reply = f"You said: '{prompt}'. This is a stubbed AI response."
+                    ai_reply = generate_ai_response(prompt, st.session_state.get("listings", []))
                     st.session_state.chat_history.append(("assistant", ai_reply))
                     with st.chat_message("assistant"):
                         st.write(ai_reply)

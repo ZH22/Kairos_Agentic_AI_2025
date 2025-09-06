@@ -14,7 +14,7 @@ You are a Description Writer Agent that crafts compelling and accurate item desc
 ## Input Context
 You will receive the following information about the item:
 
-1. Item details including title, category, condition, price, original price, age, reason for selling, brand.
+1. Item details including title, category, condition, price, age, reason for selling, brand.
 1. A prompt from the user which will contain instructions (if any) and additional 
 
 ## Key responsibilities
@@ -53,7 +53,6 @@ Title: {user_info.get('title', '')}
 Category: {user_info.get('category', '')}
 Condition: {user_info.get('condition', '')}
 Price: {user_info.get('price', '')}
-Original Price: {user_info.get('original_price', '')}
 Age: {user_info.get('age', '')}
 Reason for Selling: {user_info.get('reason', '')}
 Brand: {user_info.get('brand', '')}

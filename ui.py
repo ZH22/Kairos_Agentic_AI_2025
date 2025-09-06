@@ -78,8 +78,14 @@ for emoji_label, page_name in pages.items():
         st.session_state.active_page = page_name
 
 page = st.session_state.active_page
+
+# --- Evaluation Page (Special handling) ---
+if page == "evaluation":
+    import ui.evaluation_ui as evaluation_ui
+    evaluation_ui.display()
+
 # --- Home ---
-if page == "Home":
+elif page == "Home":
     home_ui.display()
 
 # --- Browse Page (Chat + Toggle Search Listings) ---

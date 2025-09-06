@@ -1,5 +1,5 @@
 """
-Test script for Market Agents (WebsearchAgent and MarketAnalyzer)
+Test script for Market Agents (WebsearchAgent and MarketAnalyzer with internal_db_search tool)
 
 'Callback = True' here, so you can see results from each stage
 """
@@ -25,10 +25,10 @@ def main():
     print("WebsearchAgent Output:")
     print(web_report)
 
-    print("\n=== Testing MarketAnalyzer ===")
+    print("\n=== Testing MarketAnalyzer with internal_db_search tool ===")
     analyzer = MarketAnalyzer()
-    key_points = analyzer.analyze(web_report)
-    print("MarketAnalyzer Output:")
+    key_points = analyzer.analyze(web_report, fake_user_info_prompt)
+    print("MarketAnalyzer Output (with internal DB tool access):")
     print(key_points)
 
 if __name__ == "__main__":

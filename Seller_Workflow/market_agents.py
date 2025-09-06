@@ -110,11 +110,15 @@ You have access to search tools (tavily_search and http_request) for VALIDATION 
 
 ## Output Format
 
-Provide ONLY bullet points with no additional text:
+Provide ONLY the following structure with bullet points:
 
+**External Market:**
 - [Key point with brief explanation] (source: [website.com])
 - [Key point with brief explanation] (source: [website.com])
-- [Key point with brief explanation] (source: [website.com])
+
+**Internal Market:**
+- [Key point with brief explanation] (source: Internal Marketplace Database)
+- [Key point with brief explanation] (source: Internal Marketplace Database)
 """
 
 small_model = BedrockModel(
@@ -155,6 +159,91 @@ def tavily_search(query: str, max_results: int = 5):
         })
     return results
 
+def _create_search_text(user_info: str) -> str:
+    """Create optimized search text from user item information"""
+    lines = user_info.strip().split('\n')
+    search_parts = []
+    
+    for line in lines:
+        if ':' in line:
+            key, value = line.split(':', 1)
+            key = key.strip().lower()
+            value = value.strip()
+            
+            # Prioritize key fields for semantic search
+            if key in ['item', 'brand', 'category', 'condition'] and value != 'N/A':
+                search_parts.append(value)
+    
+    return ' '.join(search_parts)
+
+@tool
+def semantic_db_search(user_info: str = "", custom_query: str = "", category: str = "", limit: int = 5):
+    """
+    Search internal marketplace database using semantic similarity for better matching.
+    Args:
+        user_info: User item information to extract search terms from
+        custom_query: Optional custom search query (overrides user_info extraction)
+        category: Optional category filter (e.g., "Tech and Gadgets", "Furniture")
+        limit: Number of similar items to return (default 5)
+    Returns:
+        Dictionary with semantically similar listings and pricing data
+    """
+    try:
+        import sys
+        import os
+        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+        from db_Handler import DbHandler
+        
+        db = DbHandler()
+        
+        # Create search query
+        if custom_query:
+            search_text = custom_query
+        else:
+            search_text = _create_search_text(user_info)
+        
+        # Use semantic search via query_try
+        semantic_results = db.query_try(search_text, limit)
+        
+        # Get all listings for price statistics
+        all_listings = db.get_listings()
+        
+        # Filter by category if provided
+        if category:
+            category_listings = [item for item in all_listings 
+                               if item.get('category', '').lower() == category.lower()]
+        else:
+            category_listings = all_listings
+        
+        # Calculate price statistics
+        if category_listings:
+            prices = [float(item.get('price', 0)) for item in category_listings if item.get('price')]
+            avg_price = sum(prices) / len(prices) if prices else 0
+            min_price = min(prices) if prices else 0
+            max_price = max(prices) if prices else 0
+        else:
+            avg_price = min_price = max_price = 0
+        
+        # Format semantic results
+        similar_items = []
+        for result in semantic_results:
+            similar_items.append({
+                "description": result.get('metadata', {}).get('text', 'No description'),
+                "similarity_score": round(result.get('distance', 0), 3)
+            })
+        
+        return {
+            "search_query_used": search_text,
+            "semantic_matches": similar_items,
+            "total_category_listings": len(category_listings),
+            "avg_price": round(avg_price, 2),
+            "min_price": min_price,
+            "max_price": max_price
+        }
+        
+    except Exception as e:
+        return {"error": f"Semantic search failed: {str(e)}"}
+
 # =============================================================================
 # AGENT CLASSES
 # =============================================================================
@@ -177,13 +266,61 @@ class WebsearchAgent:
         Returns: str (structured market analysis report)
         """
         return self.agent(user_prompt)
+    
+    def _format_results(self, search_results, all_listings, user_prompt):
+        """Format search results into structured report"""
+        # Extract user's category and price for comparison
+        user_category = self._extract_field(user_prompt, 'category')
+        user_price = self._extract_price(user_prompt)
+        
+        # Filter listings by category
+        category_listings = [item for item in all_listings 
+                           if item.get('category', '').lower() == user_category.lower()] if user_category else []
+        
+        # Calculate price statistics
+        if category_listings:
+            prices = [float(item.get('price', 0)) for item in category_listings if item.get('price')]
+            avg_price = sum(prices) / len(prices) if prices else 0
+            min_price = min(prices) if prices else 0
+            max_price = max(prices) if prices else 0
+        else:
+            avg_price = min_price = max_price = 0
+        
+        report = f"""**INTERNAL DATABASE SUMMARY:**
+Found {len(category_listings)} similar items in marketplace database
 
-# class InternalDBSearchAgent:
-#     def __init__(self):
-#         pass
-#     def search(self, user_info):
-#         # TODO: Implement internal DB search logic
-#         return {"results": [], "sources": []}
+**MARKETPLACE PRICING:**
+- Average Price: ${avg_price:.2f}
+- Price Range: ${min_price:.2f} - ${max_price:.2f}
+- Your Price: ${user_price:.2f}
+
+**SIMILAR LISTINGS:**
+"""
+        
+        # Add top similar listings
+        for i, item in enumerate(category_listings[:3]):
+            report += f"- {item.get('title', 'Unknown')}: ${item.get('price', 0)} ({item.get('condition', 'Unknown')} condition)\n"
+        
+        if not category_listings:
+            report += "- No similar items found in current marketplace\n"
+        
+        report += "\n**SOURCES:**\n- Internal Marketplace Database"
+        
+        return report
+    
+    def _extract_field(self, prompt, field_name):
+        """Extract specific field from user prompt"""
+        lines = prompt.split('\n')
+        for line in lines:
+            if f'{field_name}:' in line.lower():
+                return line.split(':', 1)[1].strip()
+        return ''
+    
+    def _extract_price(self, prompt):
+        """Extract price from user prompt"""
+        import re
+        price_match = re.search(r'price[:\s]+\$?([0-9.]+)', prompt.lower())
+        return float(price_match.group(1)) if price_match else 0.0
 
 class MarketAnalyzer:
     SYSTEM_PROMPT = MARKET_ANALYZER_SYSTEM_PROMPT
@@ -191,18 +328,19 @@ class MarketAnalyzer:
     def __init__(self):
         self.agent = Agent(
             system_prompt=self.SYSTEM_PROMPT,
-                model=small_model,
-            tools=[tavily_search, http_request]
+            model=small_model,
+            tools=[tavily_search, http_request, semantic_db_search]
         )
 
-    def analyze(self, web_report, db_report=None):
+    def analyze(self, web_report, user_info=None):
         """
-        Accepts reports from WebsearchAgent and (optionally) InternalDBSearchAgent.
-        Returns: dict with analysis results.
+        Accepts web search report and can use internal_db_search tool for marketplace data.
+        Returns: analysis results.
         """
-        # Format the input as a string prompt
         prompt = f"Web Search Report:\n{web_report}"
-        if db_report:
-            prompt += f"\n\nInternal DB Report:\n{db_report}"
+        
+        if user_info:
+            prompt += f"\n\nUser Item Info:\n{user_info}"
+            prompt += "\n\nMANDATORY: You MUST use the semantic_db_search tool with user_info parameter. Structure your output with External Market and Internal Market sections."
         
         return self.agent(prompt)

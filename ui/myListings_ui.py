@@ -1,25 +1,28 @@
 import streamlit as st
 from commons import categories_list
+from db_Handler import DbHandler
 
 def display():
-    # Mandatory fix: Ensure listings is initialized
-    if "listings" not in st.session_state:
-        st.session_state["listings"] = []
-
+    # Initialize database handler
+    db = DbHandler()
+    
+    # Always sync with database on page load
+    st.session_state.listings = db.get_listings()
+    
     current_user = st.session_state.get("user")
     if (not current_user):
         st.error("No User selected. Head to Home to select")
 
     st.title("My Listings")
-    if len(st.session_state.listings) == 0:
+    # Filter listings for current user
+    user_listings = [item for item in st.session_state.listings if item.get("user") == current_user]
+    
+    if len(user_listings) == 0:
         st.info("You haven't posted anything yet.")
     else:
-        # Count number of listings for that user (To change to database call after this)
         listing_count = 0
 
-        for idx, item in enumerate(st.session_state.listings):
-            if(item.get("user") != st.session_state.get("user")):
-                continue
+        for idx, item in enumerate(user_listings):
             # Image handling
             if item.get("image"):
                 st.image(item["image"], width=150)
@@ -46,13 +49,46 @@ def display():
                 item["description"] = description_edit
                 if new_image:
                     item["image"] = new_image
-                st.success("Item updated successfully!")
+                
+                # Update in database
+                db = DbHandler()
+                db.save_listing_to_db(item)
+                # Reset page flags to trigger refresh
+                if "page_loaded_browse" in st.session_state:
+                    del st.session_state.page_loaded_browse
+                st.success("Item updated in database!")
 
-            # Delete option
-            if st.button(f"Delete {item.get('title', 'Item')}", key=f"del_{idx}"):
-                st.session_state.listings.pop(idx)
-                st.success("Item deleted.")
-                st.rerun()
+            # Delete option with confirmation
+            delete_key = f"delete_confirm_{idx}"
+            if delete_key not in st.session_state:
+                st.session_state[delete_key] = False
+                
+            if not st.session_state[delete_key]:
+                if st.button(f"Delete {item.get('title', 'Item')}", key=f"del_{idx}"):
+                    st.session_state[delete_key] = True
+                    st.rerun()
+            else:
+                st.warning(f"⚠️ Are you sure you want to delete '{item.get('title', 'Item')}'? This cannot be undone.")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✅ Yes, Delete", key=f"confirm_{idx}"):
+                        db = DbHandler()
+                        listing_id = item.get('id')
+                        if listing_id and db.delete_listing_by_id(listing_id, current_user):
+                            # Refresh from database
+                            st.session_state.listings = db.get_listings()
+                            # Reset page flags
+                            if "page_loaded_browse" in st.session_state:
+                                del st.session_state.page_loaded_browse
+                            st.success("Item deleted successfully!")
+                        else:
+                            st.error("Failed to delete item. You may not have permission.")
+                        st.session_state[delete_key] = False
+                        st.rerun()
+                with col2:
+                    if st.button("❌ Cancel", key=f"cancel_{idx}"):
+                        st.session_state[delete_key] = False
+                        st.rerun()
 
             # Date formatting
             date_posted = item.get("date_posted")
@@ -69,5 +105,5 @@ def display():
 
             listing_count += 1
 
-        if (listing_count == 0):
+        if listing_count == 0:
             st.info("You don't have any listings")

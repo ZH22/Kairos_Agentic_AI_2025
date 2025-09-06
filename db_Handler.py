@@ -42,7 +42,10 @@ class DbHandler:
 
     # Change image to base64 
     image = listing_object["image"]
-    b64_img = image_to_base64(image).decode('utf-8')
+    if image is not None:
+        b64_img = image_to_base64(image).decode('utf-8')
+    else:
+        b64_img = None
 
     # Change boolean values
     data['price_negotiable'] = data['price_negotiable'] == 'Yes'
@@ -60,10 +63,15 @@ class DbHandler:
     data['user'] = userid
     data['image_base64'] = b64_img 
 
-    # Modify to image_base64, user -> userid
+    # Save to main database
     response = (self.db_client.table("listing")
                 .insert(data)
                 .execute())
+    
+    # Add to vector store for semantic search
+    if response.data:
+        listing_id = response.data[0]['id']
+        self._add_to_vector_store(listing_object, listing_id)
 
   def get_userid_from_username(self, username):
     resp = self.db_client.table("user_profile").select("id").eq("username", username).execute()
@@ -91,10 +99,104 @@ class DbHandler:
       item['price_negotiable'] = "Yes" if item['price_negotiable'] else "No"
       item['university'] = item['university'].title()
       item['delivery_option'] = item['delivery_option'].replace('_', ' ').title()
-      item['image'] = base64.b64decode(item['image_base64'])
+      if item['image_base64']:
+          item['image'] = base64.b64decode(item['image_base64'])
+      else:
+          item['image'] = None
       del item['image_base64']
 
     return listings
+
+  def delete_listing_by_id(self, listing_id, current_user):
+    """Delete a listing from database by ID with ownership validation"""
+    try:
+        # First verify ownership
+        listing_check = (self.db_client.table("listing")
+                        .select("user")
+                        .eq("id", listing_id)
+                        .execute())
+        
+        if not listing_check.data:
+            print(f"Listing {listing_id} not found")
+            return False
+            
+        # Get listing owner's user ID
+        listing_owner_id = listing_check.data[0]["user"]
+        current_user_id = self.get_userid_from_username(current_user)
+        
+        # Verify ownership
+        if listing_owner_id != current_user_id:
+            print(f"User {current_user} not authorized to delete listing {listing_id}")
+            return False
+            
+        # Delete the listing
+        response = (self.db_client.table("listing")
+                   .delete()
+                   .eq("id", listing_id)
+                   .execute())
+        
+        # Also remove from vector store
+        self._remove_from_vector_store(listing_id)
+        
+        print(f"Listing {listing_id} deleted successfully")
+        return True
+        
+    except Exception as e:
+        print(f"Error deleting listing {listing_id}: {e}")
+        return False
+  
+  def _add_to_vector_store(self, listing_object, listing_id):
+    """Add listing to vector store for semantic search"""
+    try:
+        # Create searchable text from listing
+        searchable_text = f"{listing_object.get('title', '')} {listing_object.get('description', '')} {listing_object.get('brand', '')} {listing_object.get('category', '')}".strip()
+        
+        if not searchable_text:
+            print(f"No searchable text for listing {listing_id}")
+            return
+        
+        # Generate embedding
+        response = self.llm_client.invoke_model(
+            body=json.dumps({"inputText": searchable_text}),
+            modelId=os.getenv("EMBED_MODEL_SMALL"),
+            accept="application/json",
+            contentType="application/json"
+        )
+        
+        response_body = json.loads(response["body"].read())
+        embedding = response_body.get("embedding")
+        
+        if embedding:
+            # Add to vector collection
+            sentencesDB = self.vec_client.get_or_create_collection(name="sentences", dimension=1536)
+            sentencesDB.upsert(
+                records=[
+                    {
+                        "id": f"listing_{listing_id}",
+                        "vec": embedding,
+                        "metadata": {
+                            "listing_id": listing_id,
+                            "text": searchable_text,
+                            "title": listing_object.get('title', ''),
+                            "category": listing_object.get('category', ''),
+                            "price": listing_object.get('price', 0)
+                        }
+                    }
+                ]
+            )
+            print(f"Added listing {listing_id} to vector store")
+        
+    except Exception as e:
+        print(f"Error adding listing {listing_id} to vector store: {e}")
+  
+  def _remove_from_vector_store(self, listing_id):
+    """Remove listing from vector store"""
+    try:
+        sentencesDB = self.vec_client.get_or_create_collection(name="sentences", dimension=1536)
+        sentencesDB.delete(ids=[f"listing_{listing_id}"])
+        print(f"Removed listing {listing_id} from vector store")
+    except Exception as e:
+        print(f"Error removing listing {listing_id} from vector store: {e}")
   
   # *****************************
   # Returns an array of the top k similar sentences to query 
@@ -136,3 +238,32 @@ class DbHandler:
     print("Queried Results! Returning as array")
 
     return results
+  
+  def populate_vector_store_from_existing(self):
+    """Populate vector store with existing listings (one-time setup)"""
+    try:
+        # Get all existing listings
+        response = self.db_client.table("listing").select("*").execute()
+        listings = response.data
+        
+        print(f"Populating vector store with {len(listings)} existing listings...")
+        
+        for listing in listings:
+            # Convert back to original format for processing
+            listing_object = {
+                'title': listing.get('title', ''),
+                'description': listing.get('description', ''),
+                'brand': listing.get('brand', ''),
+                'category': listing.get('category', '').replace('_', ' ').title(),
+                'price': listing.get('price', 0)
+            }
+            
+            # Add to vector store
+            self._add_to_vector_store(listing_object, listing['id'])
+        
+        print(f"Vector store population completed!")
+        return True
+        
+    except Exception as e:
+        print(f"Error populating vector store: {e}")
+        return False

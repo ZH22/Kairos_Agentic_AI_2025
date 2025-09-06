@@ -42,7 +42,7 @@ def display():
     demo_condition = st.session_state.get("demo_condition", "New")
     condition_index = condition_options.index(demo_condition) if demo_condition in condition_options else 0
     condition = st.selectbox("Condition", condition_options, index=condition_index, help="Describe the item's condition.")
-    original_price = st.number_input("Original Price ($SGD)", min_value=0.0, value=st.session_state.get("demo_original_price", 0.0), format="%.2f", help="What did you pay for this item when new?")
+
     price = st.number_input("Price ($SGD)", min_value=0.0, value=st.session_state.get("demo_price", 0.0), format="%.2f", help="Your asking price.")
     age = st.number_input("Age (in months)", min_value=0, value=st.session_state.get("demo_age", 0), step=1, format="%d", help="How long have you used this item?")
     brand = st.text_input("Brand (optional)", value=st.session_state.get("demo_brand", ""), help="Brand or manufacturer (if relevant).")
@@ -72,7 +72,6 @@ def display():
         "user": user,
         "title": title,
         "price": price,
-        "original_price": original_price,
         "age": age,
         "reason": reason,
         "brand": brand,
@@ -103,8 +102,7 @@ def display():
             missing.append("User")
         if not condition:
             missing.append("Condition")
-        if not original_price:
-            missing.append("Original Price")
+
         if not age:
             missing.append("Age")
         return missing
@@ -155,12 +153,11 @@ def display():
                 "category": category,
                 "condition": condition,
                 "age": age,
-                "original_price": original_price,
                 "price": price,
                 "reason": reason,
                 "price_negotiable": price_negotiable
             }
-            st.session_state.page = "evaluation"
+            st.session_state.active_page = "evaluation"
             st.rerun()
     submitted = st.button("Post Item")
     
@@ -178,7 +175,6 @@ def display():
                 "user": user,
                 "title": title,
                 "price": price,
-                "original_price": original_price,
                 "age": age,
                 "reason": reason,
                 "brand": brand,
@@ -197,7 +193,12 @@ def display():
             external_db_handler = DbHandler()
             external_db_handler.save_listing_to_db(item_data)
 
-            # Save Item to local session
-            st.session_state.listings.append(item_data)
-            st.success("Item posted successfully!")
+            # Refresh listings and reset page flags
+            st.session_state.listings = external_db_handler.get_listings()
+            # Reset page load flags to trigger refresh on other pages
+            if "page_loaded_mylistings" in st.session_state:
+                del st.session_state.page_loaded_mylistings
+            if "page_loaded_browse" in st.session_state:
+                del st.session_state.page_loaded_browse
+            st.success("Item posted successfully and synced with database!")
 

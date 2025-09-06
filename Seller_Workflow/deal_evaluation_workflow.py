@@ -51,10 +51,10 @@ Price Negotiable: {user_info.get('price_negotiable', 'N/A')}
         web_result = web_agent.search(user_info_prompt)
         web_report = str(web_result) if hasattr(web_result, '__str__') else web_result
 
-    # 2. Market Analyzer (silent execution)
+    # 2. Market Analyzer with internal DB tool access (silent execution)
     with suppress_output():
         analyzer = MarketAnalyzer()
-        key_result = analyzer.analyze(web_report)
+        key_result = analyzer.analyze(web_report, user_info_prompt)
         key_points = str(key_result) if hasattr(key_result, '__str__') else key_result
 
     # 3. Synthesis Agent (only this output is returned to user)

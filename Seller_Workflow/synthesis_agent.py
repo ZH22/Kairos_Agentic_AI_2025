@@ -48,15 +48,31 @@ Put yourself in the seller's shoes and balance their competing interests:
 Provide ONLY the following markdown-formatted structure with no additional text:
 
 ## 📊 Market Overview
-[Brief summary of current market conditions based on key points, establishing context and credibility]
+
+### External Market Analysis
+[Brief summary of external market conditions from web research]
+
+### Internal Market Analysis
+[Brief summary of internal marketplace conditions, or "Limited internal data available" if minimal information found]
 
 ## 🎯 Competitiveness Analysis
-[Analysis of how user's current offer compares to market conditions, including strengths and weaknesses]
+[Analysis of how user's current offer compares to both external and internal market conditions, including strengths and weaknesses]
 
 ### Competitiveness Score: **[0-100]/100**
 
 ## 💡 Recommendations
-[Specific, actionable steps user can take to improve their offer's competitiveness, prioritized by impact. Use bullet points with markdown formatting for clarity]
+
+### Pricing Strategy
+- [Specific pricing recommendation with rationale]
+- [Price negotiability recommendation]
+
+### Listing Optimization
+- [Specific improvements to listing presentation]
+- [Timing or urgency recommendations]
+
+### Market Positioning
+- [How to position against competition]
+- [Key selling points to emphasize]
 """
 
 complex_model = BedrockModel(
@@ -88,7 +104,7 @@ class SynthesisAgent:
         # Ensure text is a string
         if not isinstance(text, str):
             text = str(text)
-        text = re.sub(r'\b\w\s+(?=\w)', '', text)
-        text = re.sub(r'(\d+)\s*\)\s*([a-z])', r'\1) \2', text)
-        text = re.sub(r'\s+', ' ', text)
+        # Only normalize excessive whitespace, don't remove content
+        text = re.sub(r'\n\s*\n', '\n\n', text)  # Fix paragraph spacing
+        text = re.sub(r'[ \t]+', ' ', text)  # Normalize spaces/tabs but keep line breaks
         return text.strip()

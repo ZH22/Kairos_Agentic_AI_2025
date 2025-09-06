@@ -25,3 +25,8 @@ def init_keys():
 
     if "user" not in st.session_state:
         st.session_state.user = None
+
+def refresh_listings_from_db():
+    """Refresh listings from database"""
+    db = DbHandler()
+    st.session_state.listings = db.get_listings()

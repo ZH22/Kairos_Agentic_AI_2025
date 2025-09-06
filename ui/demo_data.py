@@ -6,11 +6,11 @@ Contains sample data for a second-hand portable aircon
 def get_demo_data():
     """Returns demo data for a second-hand portable aircon"""
     return {
-        "title": "Portable Air Conditioner - Excellent Cooling Performance",
+        "title": "Portable Air Conditioner",
         "brand": "Midea",
         "category": "Electronics",
         "condition": "Used",
-        "original_price": 450.00,
+
         "price": 280.00,
         "age": 8,
         "reason": "Moving overseas, need to sell quickly",
