@@ -8,7 +8,7 @@ load_dotenv()
 
 
 # Create Agent Instance
-agent = Agent(model="us.anthropic.claude-3-5-haiku-20241022-v1:0")
+agent = Agent(model= "us.anthropic.claude-3-5-sonnet-20241022-v2:0")
 
 
 # Trial Run

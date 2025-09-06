@@ -9,3 +9,4 @@ boto3
 vecs
 
 supabase
+tavily-python

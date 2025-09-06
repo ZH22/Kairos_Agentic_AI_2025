@@ -52,7 +52,7 @@ def display():
             if st.button(f"Delete {item.get('title', 'Item')}", key=f"del_{idx}"):
                 st.session_state.listings.pop(idx)
                 st.success("Item deleted.")
-                st.experimental_rerun()
+                st.rerun()
 
             # Date formatting
             date_posted = item.get("date_posted")

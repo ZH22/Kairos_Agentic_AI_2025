@@ -1,5 +1,6 @@
 import streamlit as st
 from commons import categories_list
+from demo_data import get_demo_data
 
 import datetime
 from commons import categories_list
@@ -11,11 +12,16 @@ from Seller_Workflow.description_writer import Writer
 def display():
 
     st.title("Post a New Item")
-
-
+    
+    # Demo button
+    if st.button("🎯 Fill Demo Data (Portable Aircon)", help="Click to fill all fields with sample data for testing"):
+        demo_data = get_demo_data()
+        for key, value in demo_data.items():
+            st.session_state[f"demo_{key}"] = value
+        st.rerun()
 
     user = st.text_input("User", value=st.session_state.get("user"), disabled=True)
-    title = st.text_input("Item Title", help="Enter a clear, descriptive title for your item.")
+    title = st.text_input("Item Title", value=st.session_state.get("demo_title", ""), help="Enter a clear, descriptive title for your item.")
     image = st.file_uploader("Upload Image (optional)", type=["png", "jpg", "jpeg"], help="Max 5MB. JPG, PNG only.")
     if image:
         if image.size > 5 * 1024 * 1024:
@@ -23,17 +29,34 @@ def display():
             image = None
         else:
             st.image(image, width=150)
-    category = st.selectbox("Category", categories_list, help="Select the most relevant category.")
-    condition = st.selectbox("Condition", ["New", "Like New", "Used", "Heavily Used"], help="Describe the item's condition.")
-    original_price = st.number_input("Original Price ($SGD)", min_value=0.0, format="%.2f", help="What did you pay for this item when new?")
-    price = st.number_input("Price ($SGD)", min_value=0.0, format="%.2f", help="Your asking price.")
-    age = st.number_input("Age (in months)", min_value=0, step=1, format="%d", help="How long have you used this item?")
-    brand = st.text_input("Brand (optional)", help="Brand or manufacturer (if relevant).")
-    reason = st.text_area("Reason for Selling (optional)", help="Why are you selling this item?")
-    price_negotiable = st.selectbox("Is the price negotiable?", ["Yes", "No"], help="Are you open to offers?")
-    university = st.selectbox("University/Campus", ["NUS", "NTU", "SMU", "Off campus"], help="Select your university or campus.")
-    address = st.text_input("Specific Location (Block/Room)", help="E.g., Block 12, Room 101, or area on campus.")
-    delivery_option = st.selectbox("Delivery Option", ["Buyer Pickup", "Seller Delivery", "Third-party Delivery", "Other"], help="How will the item be delivered?")
+    demo_category = st.session_state.get("demo_category", categories_list[0])
+    category_index = categories_list.index(demo_category) if demo_category in categories_list else 0
+    category = st.selectbox("Category", categories_list, index=category_index, help="Select the most relevant category.")
+    condition_options = ["New", "Like New", "Used", "Heavily Used"]
+    demo_condition = st.session_state.get("demo_condition", "New")
+    condition_index = condition_options.index(demo_condition) if demo_condition in condition_options else 0
+    condition = st.selectbox("Condition", condition_options, index=condition_index, help="Describe the item's condition.")
+    original_price = st.number_input("Original Price ($SGD)", min_value=0.0, value=st.session_state.get("demo_original_price", 0.0), format="%.2f", help="What did you pay for this item when new?")
+    price = st.number_input("Price ($SGD)", min_value=0.0, value=st.session_state.get("demo_price", 0.0), format="%.2f", help="Your asking price.")
+    age = st.number_input("Age (in months)", min_value=0, value=st.session_state.get("demo_age", 0), step=1, format="%d", help="How long have you used this item?")
+    brand = st.text_input("Brand (optional)", value=st.session_state.get("demo_brand", ""), help="Brand or manufacturer (if relevant).")
+    reason = st.text_area("Reason for Selling (optional)", value=st.session_state.get("demo_reason", ""), help="Why are you selling this item?")
+    negotiable_options = ["Yes", "No"]
+    demo_negotiable = st.session_state.get("demo_price_negotiable", "Yes")
+    negotiable_index = negotiable_options.index(demo_negotiable) if demo_negotiable in negotiable_options else 0
+    price_negotiable = st.selectbox("Is the price negotiable?", negotiable_options, index=negotiable_index, help="Are you open to offers?")
+    
+    university_options = ["NUS", "NTU", "SMU", "Off campus"]
+    demo_university = st.session_state.get("demo_university", "NUS")
+    university_index = university_options.index(demo_university) if demo_university in university_options else 0
+    university = st.selectbox("University/Campus", university_options, index=university_index, help="Select your university or campus.")
+    
+    address = st.text_input("Specific Location (Block/Room)", value=st.session_state.get("demo_address", ""), help="E.g., Block 12, Room 101, or area on campus.")
+    
+    delivery_options = ["Buyer Pickup", "Seller Delivery", "Third-party Delivery", "Other"]
+    demo_delivery = st.session_state.get("demo_delivery_option", "Buyer Pickup")
+    delivery_index = delivery_options.index(demo_delivery) if demo_delivery in delivery_options else 0
+    delivery_option = st.selectbox("Delivery Option", delivery_options, index=delivery_index, help="How will the item be delivered?")
     custom_delivery_option = ""
     if delivery_option == "Other":
         custom_delivery_option = st.text_input("Please describe your delivery option", help="Describe your custom delivery arrangement.")
@@ -114,6 +137,25 @@ def display():
     else:
         description = st.text_area("Description")
     
+    if st.button("Evaluate Your Deal!"):
+        missing_fields = get_missing_fields()
+        if missing_fields:
+            st.error(f"Please fill all required fields before evaluation. Missing: {', '.join(missing_fields)}")
+        else:
+            # Store user_info in session state for DE_ui to use
+            st.session_state.user_info = {
+                "title": title,
+                "brand": brand,
+                "category": category,
+                "condition": condition,
+                "age": age,
+                "original_price": original_price,
+                "price": price,
+                "reason": reason,
+                "price_negotiable": price_negotiable
+            }
+            st.session_state.page = "evaluation"
+            st.rerun()
     submitted = st.button("Post Item")
     
     if submitted:

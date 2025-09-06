@@ -22,22 +22,28 @@ import ui.myListings_ui as myListings_ui
 init_keys()
 # ====================================================================
 
-# Sidebar navigation
-st.sidebar.title("E-Commerce App")
-page = st.sidebar.radio("Go to", ["Home", "Browse", "Post Item", "My Listings"])
 
-# --- Home ---
-if page == "Home":
-    home_ui.display()
+# Custom router logic for intermediate evaluation page
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 
-# --- Browse ---
-elif page == "Browse":
-    browse_ui.display()
+def go_to(page_name):
+    st.session_state.page = page_name
+    st.rerun()
 
-# --- Post Item ---
-elif page == "Post Item":
-    postItem_ui.display()
-    
-# --- My Listings ---
-elif page == "My Listings":
-    myListings_ui.display()
+if st.session_state.page == "evaluation":
+    import ui.evaluation_ui as evaluation_ui
+    evaluation_ui.display()
+else:
+    st.sidebar.title("E-Commerce App")
+    page = st.sidebar.radio("Go to", ["Home", "Browse", "Post Item", "My Listings"],
+                            index=["Home", "Browse", "Post Item", "My Listings"].index(st.session_state.page) if st.session_state.page in ["Home", "Browse", "Post Item", "My Listings"] else 0)
+    st.session_state.page = page
+    if page == "Home":
+        home_ui.display()
+    elif page == "Browse":
+        browse_ui.display()
+    elif page == "Post Item":
+        postItem_ui.display()
+    elif page == "My Listings":
+        myListings_ui.display()
