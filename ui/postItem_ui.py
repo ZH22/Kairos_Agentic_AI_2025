@@ -3,6 +3,7 @@ from commons import categories_list
 
 import datetime
 from commons import categories_list, condition_list
+from helper_scripts.image_helper import compress_incoming_image_file
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Seller_Workflow')))
@@ -12,17 +13,19 @@ def display():
 
     st.title("Post a New Item")
 
-
-
     user = st.text_input("User", value=st.session_state.get("user"), disabled=True)
     title = st.text_input("Item Title", help="Enter a clear, descriptive title for your item.")
     image = st.file_uploader("Upload Image (optional)", type=["png", "jpg", "jpeg"], help="Max 5MB. JPG, PNG only.")
+    small_img_bytes = None
     if image:
         if image.size > 5 * 1024 * 1024:
             st.warning("Image file is too large (max 5MB). Please upload a smaller image.")
             image = None
         else:
-            st.image(image, width=150)
+            # Compress Image and save
+            small_img_bytes = compress_incoming_image_file(image, quality=30)
+            st.image(small_img_bytes, caption="Preview Image", width=150)
+
     category = st.selectbox("Category", categories_list, help="Select the most relevant category.")
     condition = st.selectbox("Condition", condition_list, help="Describe the item's condition.")
     original_price = st.number_input("Original Price ($SGD)", min_value=0.0, format="%.2f", help="What did you pay for this item when new?")
@@ -141,7 +144,7 @@ def display():
                 "category": category,
                 "condition": condition,
                 "description": description,
-                "image": image if image else None,
+                "image": small_img_bytes if small_img_bytes else None,
                 "date_posted": datetime.datetime.now()
             }
             st.session_state.listings.append(item_data)
