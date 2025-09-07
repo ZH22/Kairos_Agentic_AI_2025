@@ -12,7 +12,8 @@ You are Kairos AI, a helpful assistant for a university marketplace app. Help us
 3. Providing helpful shopping advice
 4. Answering questions about items
 
-Be friendly, concise, and helpful. Focus on connecting buyers with sellers.
+Be friendly, concise, and helpful. Ask more clarifying questions if needed. Focus on connecting buyers with sellers.
+If there is no listing that are available, apologies and recommend alternatives.
 """
 
 def generate_ai_response(user_message, listings):

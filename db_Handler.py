@@ -1,4 +1,6 @@
+import ast
 import boto3
+import numpy as np
 import vecs
 import json
 from dotenv import load_dotenv
@@ -156,7 +158,7 @@ class DbHandler:
     for item in listings:
       item['user'] = self.get_username_from_id(item['user'])
       item['date_posted'] = datetime.fromisoformat(item['created_at']).strftime("%d %B %Y, %H:%M")
-      item['category'] = item['category'].replace('_', ' ').title()
+      item['category'] = item['category'].replace('_', ' ').title().replace('And', 'and')
       item['condition'] = item['condition'].replace('_', ' ').title()
       del item['created_at']
       item['price_negotiable'] = "Yes" if item['price_negotiable'] else "No"
@@ -245,11 +247,10 @@ class DbHandler:
 
         if embedding:
           # Add to listings vector
-          response = (self.db_client.table("listing")
-                      .update({"embeddings": embedding})
-                      .eq("id", listing_id)
-                      .execute()
-                      )
+          docs = self.vec_client.get_or_create_collection(name="listing", dimension=1536)
+          record = [(str(listing_id), embedding, {})]
+          docs.upsert(record)
+          
           print(f"Added listing {listing_id} to vector store")
         
     except Exception as e:
@@ -267,6 +268,23 @@ class DbHandler:
     
     data = json.loads(response)["data"] 
     return data
+
+  # *****************************
+  # One-Time migration of vectors from listing table to vecs store
+  # *****************************
+  def fix_vecs(self):
+    docs = self.vec_client.get_or_create_collection(name="listing", dimension=1536)
+    # sync IDs + embeddings from public.listing
+    rows = self.db_client.table("listing").select("id, embeddings").execute().model_dump_json()
+    data = json.loads(rows)["data"]
+    records = []
+    for r in data:
+      old_embed = r["embeddings"]
+      parsed_embed = np.array(ast.literal_eval(old_embed), dtype="float32")
+      id = str(r["id"])
+      records.append((id, parsed_embed, {}))
+    docs.upsert(records)           # fast; stores only two columns + metadata
+    docs.create_index()            # optional but speeds up search
 
   # *****************************
   # Returns an array of the top k similar sentences to query 
@@ -287,8 +305,8 @@ class DbHandler:
 
     print("Querying Vector Store for k nearest...")
     # Query Vector store for Top k Similar Items
-    sentencesDB = self.vec_client.get_or_create_collection(name="sentences", dimension=1536)
-    results = sentencesDB.query(
+    listingDB = self.vec_client.get_collection(name="listing")
+    results = listingDB.query(
       data=query_embedding,
       limit=limit_num,
       include_value = True
