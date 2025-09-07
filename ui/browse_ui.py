@@ -43,25 +43,32 @@ def display():
     with tab2:
 
         st.subheader("Available Listings")
+        search_query = st.text_input("Search for items")
+
         listings = st.session_state["listings"]
         if not listings:
             st.info("No items available yet.")
         else:
-            cols = st.columns(2)
-            for idx, item in enumerate(listings):
-                with cols[idx % 2]:
-                    if st.button(f"{item['title']}", key=f"card_{idx}"):
-                        st.session_state["selected_item"] = idx
-                    st.markdown(
-                        f"""
-                        <div class='listing-card'>
-                            <h4>{item['title']}</h4>
-                            <p><b>${item['price']}</b></p>
-                            <p>{item['category']} | {item['condition']}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+            filtered = [item for item in listings if search_query.lower() in item["title"].lower() or search_query.lower() in item["description"].lower()] if search_query else listings
+
+            if not filtered:
+                st.warning("No items match your search.")
+            else:
+                cols = st.columns(2)
+                for idx, item in enumerate(filtered):
+                    with cols[idx % 2]:
+                        if st.button(f"{item['title']}", key=f"card_{idx}"):
+                            st.session_state["selected_item"] = idx
+                        st.markdown(
+                            f"""
+                            <div class='listing-card'>
+                                <h4>{item['title']}</h4>
+                                <p><b>${item['price']}</b></p>
+                                <p>{item['category']} | {item['condition']}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
             if "selected_item" in st.session_state:
                 sel = st.session_state["selected_item"]
