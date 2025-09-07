@@ -170,8 +170,8 @@ def _create_search_text(user_info: str) -> str:
             key = key.strip().lower()
             value = value.strip()
             
-            # Prioritize key fields for semantic search
-            if key in ['item', 'brand', 'category', 'condition'] and value != 'N/A':
+            # Include more fields for better semantic matching
+            if key in ['item', 'brand', 'category', 'condition', 'reason'] and value not in ['N/A', '']:
                 search_parts.append(value)
     
     return ' '.join(search_parts)
@@ -203,7 +203,10 @@ def semantic_db_search(user_info: str = "", custom_query: str = "", category: st
             search_text = _create_search_text(user_info)
         
         # Use semantic search via query_try
-        semantic_results = db.query_try(search_text, limit)
+        similar_listing_ids = db.query_try(search_text, limit)
+        
+        # Get only the similar listings by their IDs
+        similar_listings = db.get_listings(ids=similar_listing_ids) if similar_listing_ids else []
         
         # Get all listings for price statistics
         all_listings = db.get_listings()
@@ -224,12 +227,14 @@ def semantic_db_search(user_info: str = "", custom_query: str = "", category: st
         else:
             avg_price = min_price = max_price = 0
         
-        # Format semantic results
+        # Format similar listings
         similar_items = []
-        for result in semantic_results:
+        for listing in similar_listings:
             similar_items.append({
-                "description": result.get('metadata', {}).get('text', 'No description'),
-                "similarity_score": round(result.get('distance', 0), 3)
+                "title": listing.get('title', 'Unknown'),
+                "price": listing.get('price', 0),
+                "condition": listing.get('condition', 'Unknown'),
+                "category": listing.get('category', 'Unknown')
             })
         
         return {
