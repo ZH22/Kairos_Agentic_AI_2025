@@ -82,6 +82,52 @@ class DbHandler:
     return True
 
   # *****************************
+  # Updates an existing listing
+  # *****************************
+  def update_listing_in_db(self, listing_object, listing_id):
+    # Create a copy for use
+    data = listing_object.copy()
+
+    # Get user id
+    username = listing_object["user"]
+    userid = self.get_userid_from_username(username)
+
+    # Change image to base64 
+    image = listing_object["image"]
+    if image is not None:
+        b64_img = image_to_base64(image).decode('utf-8')
+    else:
+        b64_img = None
+
+    # Change boolean values
+    data['price_negotiable'] = data['price_negotiable'] == 'Yes'
+
+    # Change Enum Values (format by lowercased, underscore seperated)
+    data['university'] = data['university'].lower().replace(" ", "_")
+    data['category'] = data['category'].lower().replace(" ", "_")
+    data['condition'] = data['condition'].lower().replace(" ", "_")
+    data['delivery_option'] = data['delivery_option'].lower().replace(" ", "_")
+
+
+    # Remove image, date_posted, user fields
+    del data['image']
+    del data['date_posted']
+    data['user'] = userid
+    data['image_base64'] = b64_img 
+
+    # Save to main database
+    response = (self.db_client.table("listing")
+                .update(data)
+                .eq("id", listing_id)
+                .execute())
+    
+    # Add to vector store for semantic search
+    if response.data:
+        listing_id = response.data[0]['id']
+        self._add_to_vector_store(listing_object, listing_id)
+    return True
+
+  # *****************************
   # User Helpers 
   # *****************************
   def get_userid_from_username(self, username):

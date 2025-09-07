@@ -22,6 +22,8 @@ def generate_ai_response(user_message, listings):
             model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
             temperature=0.7,
         )
+
+        # Get k-nearest listings using vector embeddings semantic search
         
         # Format listings for context
         listings_context = "\n".join([
@@ -30,13 +32,13 @@ def generate_ai_response(user_message, listings):
         ]) if listings else "No items currently available."
         
         context_prompt = f"""
-Available listings:
-{listings_context}
+            Available listings:
+            {listings_context}
 
-User message: {user_message}
+            User message: {user_message}
 
-Help the user with their request based on the available listings.
-"""
+            Help the user with their request based on the available listings.
+            """
         
         agent = Agent(
             model=model,

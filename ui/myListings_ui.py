@@ -50,10 +50,11 @@ def display():
                 item["description"] = description_edit
                 if new_image:
                     item["image"] = new_image
+
                 
                 # Update in database
                 db = DbHandler()
-                db.save_listing_to_db(item)
+                db.update_listing_in_db(item, item['id'])
                 # Reset page flags to trigger refresh
                 if "page_loaded_browse" in st.session_state:
                     del st.session_state.page_loaded_browse
