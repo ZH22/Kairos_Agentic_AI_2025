@@ -15,6 +15,7 @@ def display():
 
     st.title("My Listings")
     # Filter listings for current user
+    print(current_user)
     user_listings = [item for item in st.session_state.listings if item.get("user") == current_user]
     
     if len(user_listings) == 0:
