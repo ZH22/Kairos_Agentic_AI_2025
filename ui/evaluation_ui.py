@@ -15,8 +15,28 @@ def display():
         </style>
     """, unsafe_allow_html=True)
 
-    # 1. Header
-    st.title("Deal Evaluation")
+    # 1. Header with Home button
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.title("Deal Evaluation")
+    with col2:
+        if st.button("🏠 Home"):
+            st.session_state.show_home_confirm = True
+            st.rerun()
+    
+    # Confirmation dialog
+    if st.session_state.get("show_home_confirm", False):
+        st.warning("⚠️ Are you sure you want to go home? All unsaved changes will be lost.")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ Yes, Go Home"):
+                st.session_state.active_page = "Home"
+                st.session_state.show_home_confirm = False
+                st.rerun()
+        with col2:
+            if st.button("❌ Cancel"):
+                st.session_state.show_home_confirm = False
+                st.rerun()
 
     # 2. Explaining text
     st.markdown("""

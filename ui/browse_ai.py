@@ -27,8 +27,13 @@ def generate_ai_response(user_message):
 
         # Get k-nearest listings using vector embeddings semantic search
         db = DbHandler()
-        top_k_ids = db.query_try("user_message", 10)
-        filtered_listings = db.get_listings(top_k_ids) 
+        top_k_ids = db.query_try(user_message, 10)
+        
+        # Get full listing details (handle empty/stale results)
+        if top_k_ids:
+            filtered_listings = db.get_listings(top_k_ids)
+        else:
+            filtered_listings = [] 
         
         # Format listings for context
         listings_context = "\n".join([
