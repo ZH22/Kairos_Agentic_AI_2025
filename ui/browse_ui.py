@@ -7,28 +7,20 @@ from db_Handler import DbHandler
 def display():
     # Initialize database handler
     db = DbHandler()
+    st.set_page_config(layout="wide")
     
     # Auto-refresh on page load
     if "page_loaded_browse" not in st.session_state:
         st.session_state.listings = db.get_listings()
         st.session_state.page_loaded_browse = True
-    
-    # Keep manual refresh button as backup
-    if st.button("🔄 Refresh Listings"):
-        st.session_state.listings = db.get_listings()
-        st.success("Listings refreshed from database!")
-    
-    if "show_listings" not in st.session_state:
-        st.session_state.show_listings = False
-    if st.button("🔍 Search"):
-        st.session_state.show_listings = not st.session_state.show_listings
 
-    if not st.session_state.show_listings:
-        st.title("Chat with Kairos AI")
-        st.caption("This is an AI-assisted search. Chat with AI to improve search. Click twice on search button when done.")   
-
+    tab1, tab2 = st.tabs(["💬 Chat", "🔍 Search"])
+    
+    with tab1:
+        st.subheader("Chat with Kairos AI")
+        st.caption("This is an AI-assisted search. Chat with AI to improve search. Click search when done.")   
         prompt = st.chat_input("Ask me anything...")
-        with st.container(height = 200) as chat_history:
+        with st.container(height = 300):
             # Full-width chat
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
@@ -46,62 +38,41 @@ def display():
                 st.session_state.chat_history.append(("assistant", ai_reply))
                 with st.chat_message("assistant"):
                     st.write(ai_reply)
-    else:
-        st.set_page_config(layout="wide")
-        # Two-column layout when search is active
-        col1, col2 = st.columns([0.3, 0.7])
 
-        with col1:
-            st.subheader("Chat with Kairos AI")
 
-            prompt = st.chat_input("Ask me anything...")
-            with st.container(height = 200):
-                for role, msg in st.session_state.chat_history:
-                    with st.chat_message(role):
-                        st.write(msg)
+    with tab2:
 
-                if prompt:
-                    st.session_state.chat_history.append(("user", prompt))
-                    with st.chat_message("user"):
-                        st.write(prompt)
+        st.subheader("Available Listings")
+        listings = st.session_state["listings"]
+        if not listings:
+            st.info("No items available yet.")
+        else:
+            cols = st.columns(2)
+            for idx, item in enumerate(listings):
+                with cols[idx % 2]:
+                    if st.button(f"{item['title']}", key=f"card_{idx}"):
+                        st.session_state["selected_item"] = idx
+                    st.markdown(
+                        f"""
+                        <div class='listing-card'>
+                            <h4>{item['title']}</h4>
+                            <p><b>${item['price']}</b></p>
+                            <p>{item['category']} | {item['condition']}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-                    ai_reply = generate_ai_response(prompt)
-                    st.session_state.chat_history.append(("assistant", ai_reply))
-                    with st.chat_message("assistant"):
-                        st.write(ai_reply)
-
-        with col2:
-            st.subheader("Available Listings")
-            listings = st.session_state["listings"]
-            if not listings:
-                st.info("No items available yet.")
-            else:
-                cols = st.columns(2)
-                for idx, item in enumerate(listings):
-                    with cols[idx % 2]:
-                        if st.button(f"{item['title']}", key=f"card_{idx}"):
-                            st.session_state["selected_item"] = idx
-                        st.markdown(
-                            f"""
-                            <div class='listing-card'>
-                                <h4>{item['title']}</h4>
-                                <p><b>${item['price']}</b></p>
-                                <p>{item['category']} | {item['condition']}</p>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-
-                if "selected_item" in st.session_state:
-                    sel = st.session_state["selected_item"]
-                    st.markdown("---")
-                    st.subheader(listings[sel]["title"])
-                    if listings[sel]["image"] is not None:
-                        st.image(listings[sel]["image"], width=200)
-                    st.write(f"Price: ${listings[sel]['price']}")
-                    st.write(f"Category: {listings[sel]['category']}")
-                    st.write(f"Condition: {listings[sel]['condition']}")
-                    st.write(f"Description: {listings[sel]['description']}")
+            if "selected_item" in st.session_state:
+                sel = st.session_state["selected_item"]
+                st.markdown("---")
+                st.subheader(listings[sel]["title"])
+                if listings[sel]["image"] is not None:
+                    st.image(listings[sel]["image"], width=200)
+                st.write(f"Price: ${listings[sel]['price']}")
+                st.write(f"Category: {listings[sel]['category']}")
+                st.write(f"Condition: {listings[sel]['condition']}")
+                st.write(f"Description: {listings[sel]['description']}")
 
 
 
