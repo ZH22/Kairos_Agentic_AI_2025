@@ -42,7 +42,7 @@ def display():
                 with st.chat_message("user"):
                     st.write(prompt)
 
-                ai_reply = generate_ai_response(prompt, st.session_state.get("listings", []))
+                ai_reply = generate_ai_response(prompt)
                 st.session_state.chat_history.append(("assistant", ai_reply))
                 with st.chat_message("assistant"):
                     st.write(ai_reply)
@@ -65,7 +65,7 @@ def display():
                     with st.chat_message("user"):
                         st.write(prompt)
 
-                    ai_reply = generate_ai_response(prompt, st.session_state.get("listings", []))
+                    ai_reply = generate_ai_response(prompt)
                     st.session_state.chat_history.append(("assistant", ai_reply))
                     with st.chat_message("assistant"):
                         st.write(ai_reply)

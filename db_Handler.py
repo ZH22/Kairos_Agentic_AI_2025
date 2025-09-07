@@ -150,8 +150,13 @@ class DbHandler:
   # Queries the external DB for listings
   # Augments the data to match listing object in python
   # *****************************
-  def get_listings(self):
-    res = (self.db_client.table("listing").select("*").execute())
+  def get_listings(self, ids=None):
+    if ids is not None:
+      res = (self.db_client.table("listing").select("*")
+              .in_("id", ids)
+              .execute())
+    else:
+      res = (self.db_client.table("listing").select("*").execute())
     listings = res.data
 
     # Convert back to session state style
@@ -311,7 +316,9 @@ class DbHandler:
       limit=limit_num,
       include_value = True
     )
+    ids_sorted = [t[0] for t in sorted(results, key=lambda x: x[1])]
+    ids = [int(s) for s in ids_sorted]
     print("Queried Results! Returning as array")
 
-    return results
+    return ids
   
