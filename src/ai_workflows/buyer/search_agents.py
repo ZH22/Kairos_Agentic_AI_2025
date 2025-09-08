@@ -1,4 +1,19 @@
-# Buyer Workflow: Intelligent Search Agents
+"""
+Intelligent Search Agents for Buyer Workflow - Kairos AI Campus Connector
+
+This module implements a multi-agent system for intelligent item discovery:
+- QueryProcessorAgent: Validates and structures user search queries
+- SearchAnalyzerAgent: Performs semantic search and analyzes matches
+- RankingAgent: Ranks results and provides top recommendations
+
+Key Features:
+- Query validation with intelligent clarification requests
+- Semantic search using AWS Bedrock embeddings
+- Multi-criteria ranking and recommendation system
+- Fallback mechanisms for robust operation
+
+Integrates with Browse UI to provide intelligent search capabilities.
+"""
 import os
 import sys
 import json
@@ -378,11 +393,25 @@ class RankingAgent:
 
 def validate_query(raw_user_query: str):
     """
-    Validates if user query has sufficient detail for precision matching
+    Entry point for query validation workflow
+    
+    Orchestrates the query processing agent to determine if user input
+    contains sufficient detail for effective semantic search.
+    
     Args:
-        raw_user_query: Natural language user query
+        raw_user_query (str): Natural language search query from user
+        
     Returns:
-        Dict with validation result and either structured_query or clarification_request
+        dict: Validation result containing:
+            - status: 'SUFFICIENT' or 'NEEDS_MORE_INFO'
+            - structured_query: Formatted query (if sufficient)
+            - clarification_request: Questions for user (if insufficient)
+    
+    Workflow:
+        1. Parse user query for key attributes
+        2. Evaluate specificity against criteria
+        3. Structure query or generate clarification questions
+        4. Return validation result for UI handling
     """
     query_processor = QueryProcessorAgent()
     return query_processor.process(raw_user_query)

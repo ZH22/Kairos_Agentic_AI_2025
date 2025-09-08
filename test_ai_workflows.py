@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-Comprehensive AI Workflow Test Suite
-Tests all AI-involved functions on the platform to ensure workflows work after updates
+Comprehensive AI Workflow Test Suite for Kairos Agentic AI
+
+Tests all AI-involved functions with offline/demo mode support:
+- Seller workflows: Market analysis, description generation, deal evaluation
+- Buyer workflows: Query validation, semantic search, recommendations
+- Database AI functions: Vector operations, semantic matching
+- UI integrations: AI-powered features across all pages
+
+Supports both full API mode and offline demo mode for judge evaluation.
 """
 
 import sys

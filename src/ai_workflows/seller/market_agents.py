@@ -1,4 +1,15 @@
-# Agents 1, 2, 3: Websearch, Internal DB Search, Market Analyzer
+"""
+Market Analysis Agents for Kairos AI Campus Connector
+
+This module implements a multi-agent system for comprehensive market analysis:
+- WebsearchAgent: Gathers external market data via web search
+- MarketAnalyzer: Validates findings and extracts key insights
+- Semantic DB Search: Queries internal marketplace for similar items
+
+Used in deal evaluation workflow to provide sellers with market intelligence.
+"""
+
+# External dependencies for web search functionality
 # pip install tavily-python duckduckgo_search
 
 import json
@@ -255,8 +266,18 @@ def semantic_db_search(user_info: str = "", custom_query: str = "", category: st
 
 class WebsearchAgent:
     """
-    Agent 1: Websearch Agent
-    Uses strands.Agent with the system prompt, small_model, and tools [tavily_search, http_request].
+    Multi-Agent System Component: External Market Research Agent
+    
+    Responsibilities:
+    - Searches web for current market prices and trends
+    - Gathers depreciation data for item categories
+    - Validates pricing against established e-commerce platforms
+    - Provides structured market intelligence reports
+    
+    Integration:
+    - Part of seller workflow for deal evaluation
+    - Coordinates with MarketAnalyzer for data validation
+    - Uses Tavily API for reliable web search results
     """
     def __init__(self):
         self.agent = Agent(
@@ -267,8 +288,26 @@ class WebsearchAgent:
 
     def search(self, user_prompt):
         """
-        user_prompt: str (plain text prompt containing all relevant user info)
-        Returns: str (structured market analysis report)
+        Execute market research workflow for user's item
+        
+        Args:
+            user_prompt (str): Structured item information including:
+                - Item title, brand, category
+                - Condition, age, price
+                - Reason for selling
+        
+        Returns:
+            str: Formatted market analysis report with:
+                - Current market pricing data
+                - Depreciation analysis
+                - Market trends
+                - Source citations
+        
+        Workflow:
+            1. Parse user item details
+            2. Execute targeted web searches
+            3. Validate source credibility
+            4. Format structured report
         """
         return self.agent(user_prompt)
     

@@ -35,31 +35,75 @@ pip install -r requirements.txt
 streamlit run ui.py
 ```
 
-### **🔑 Required API Keys** 
-*For full AI functionality - demo data works without these*
+### **🐍 Virtual Environment Setup** *(Recommended)*
+```bash
+# Create virtual environment
+python -m venv kairos_env
 
+# Activate virtual environment
+# Windows:
+kairos_env\Scripts\activate
+# macOS/Linux:
+source kairos_env/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run application
+streamlit run ui.py
+```
+
+### **🔑 Environment Configuration**
+
+#### **Option 1: Demo Mode** *(No setup required)*
+- Application runs with mock data and offline AI workflows
+- All UI features functional for demonstration
+- Perfect for judges to evaluate immediately
+
+#### **Option 2: Full Functionality** *(API keys required)*
+Create `.env` file in project root:
 ```env
 # AWS Bedrock (for semantic search)
-AWS_ACCESS_KEY_ID=<your_aws_key>
-AWS_SECRET_ACCESS_KEY=<your_aws_secret>
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-1
 
 # Supabase (for persistent storage)
-SUPABASE_URL=<your_supabase_url>
-SUPABASE_KEY=<your_supabase_anon_key>
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_key
+DB_CONNECTION=postgresql://user:pass@host:port/db
 
 # Tavily (for market analysis)
-TAVILY_ACCESS_KEY=<your_tavily_key>
+TAVILY_ACCESS_KEY=your_tavily_api_key
+
+# AI Model Configuration
+EMBED_MODEL_SMALL=amazon.titan-embed-text-v1
 ```
+
+#### **Path Variables**
+- No additional path variables required
+- Application uses relative imports with `src/` structure
+- All dependencies managed through `requirements.txt`
 
 ### **🎯 Demo Features Available Immediately**
 - ✅ **Multi-user profiles** (Adam, Bob, Charlie)
-- ✅ **AI description generation** 
+- ✅ **AI description generation** (with fallback mock responses)
 - ✅ **Contextual help system**
-- ✅ **Complete UI workflows**
+- ✅ **Complete UI workflows** (post, browse, manage listings)
 - ✅ **Professional architecture showcase**
+- ✅ **Offline functionality** (no internet required for demo)
 
-*Full semantic search & market analysis require API keys*
+**🔄 Quick Setup Reference:**
+```bash
+# Copy environment template (optional)
+cp .env.example .env
+
+# Install and run (works without .env)
+pip install -r requirements.txt
+streamlit run ui.py
+```
+
+*Full semantic search & market analysis require API keys in .env file*
 
 ## 🏆 **Judging Criteria Demonstration**
 
@@ -129,17 +173,37 @@ Kairos_Agentic_AI_2025/
 │   │   └── db_handler.py         # Supabase + vector operations
 │   ├── ai_workflows/             # 🤖 Agentic AI components
 │   │   ├── seller/               # Market analysis, descriptions, evaluation
+│   │   │   ├── market_agents.py  # Web search + market analysis agents
+│   │   │   ├── description_writer.py # AI-powered listing descriptions
+│   │   │   ├── deal_evaluation_workflow.py # Multi-agent deal evaluation
+│   │   │   └── synthesis_agent.py # Report synthesis and recommendations
 │   │   └── buyer/                # Search intelligence, recommendations
+│   │       ├── browse_ai.py      # Conversational search assistant
+│   │       ├── search_agents.py  # Query validation + structured search
+│   │       ├── buying_guide.py   # Purchase decision support
+│   │       └── simple_search.py  # Semantic search utilities
 │   ├── ui/                       # 🎨 Modern UI architecture
 │   │   ├── pages/                # Page components
+│   │   │   ├── home_ui.py        # User selection + welcome page
+│   │   │   ├── browse_ui.py      # Item discovery + search interface
+│   │   │   ├── postItem_ui.py    # Item listing creation
+│   │   │   ├── myListings_ui.py  # User's item management
+│   │   │   └── evaluation_ui.py  # Deal evaluation interface
 │   │   ├── components/           # Reusable UI elements
+│   │   │   └── help_system.py    # Contextual help system
 │   │   └── helpers/              # UI utilities
+│   │       ├── commons.py        # Shared UI functions + constants
+│   │       └── demo_data.py      # Demo data generation
 │   └── utils/                    # Shared utilities
+│       └── image_helper.py       # Image processing utilities
 ├── tests/                        # 🧪 Comprehensive test suite
 │   ├── unit/                     # Component testing
 │   └── integration/              # Workflow testing
-├── ui.py                         # 🚀 Main application entry
-└── requirements.txt              # 📦 Dependency management
+├── ui.py                         # 🚀 Main Streamlit application entry
+├── test_ai_workflows.py          # 🧪 AI workflow verification suite
+├── populate_vector_store.py      # 🔄 Vector database initialization
+├── .env.example                  # 🔑 Environment configuration template
+└── requirements.txt              # 📦 Python dependencies
 ```
 
 ---

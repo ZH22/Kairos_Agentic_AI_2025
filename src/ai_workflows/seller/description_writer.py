@@ -1,3 +1,15 @@
+"""
+AI Description Writer for Kairos Campus Marketplace
+
+This module provides intelligent description generation for item listings:
+- Context-aware writing based on item attributes
+- Student-friendly tone and language
+- Compelling marketing copy generation
+- Customizable prompts for different item types
+
+Integrates with PostItem UI to enhance listing quality and appeal.
+"""
+
 from strands import Agent, tool
 from strands.models import BedrockModel
 
@@ -40,6 +52,19 @@ You will receive the following information about the item:
 """
 
 class Writer:
+    """
+    AI-Powered Description Generator for Campus Marketplace
+    
+    Generates compelling, student-friendly item descriptions using AWS Bedrock.
+    Optimized for campus marketplace context with trust-building elements.
+    
+    Features:
+    - Context-aware writing based on item attributes
+    - Student-friendly tone with emojis
+    - Trust-building elements (reason for selling, condition)
+    - Customizable prompts for different writing styles
+    """
+    
     def __init__(self, model=None):
         self.model = model or BedrockModel(
             model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
