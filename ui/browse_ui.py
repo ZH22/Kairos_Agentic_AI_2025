@@ -1,7 +1,6 @@
 import streamlit as st
 from commons import categories_list
 from Buyer_Workflow.browse_ai import generate_ai_response
-from Buyer_Workflow.simple_search import semantic_search_listings
 from Buyer_Workflow.search_agents import validate_query, buyer_search_workflow
 from db_Handler import DbHandler
 import re
@@ -54,34 +53,33 @@ def display():
                     st.write(ai_reply)
 
     with tab2:
-
-        st.subheader("Available Listings")
-        search_query = st.text_input("Search for items", placeholder="e.g., 'laptop under $500' or 'air conditioner good condition'")
+        st.subheader("Browse All Listings")
+        search_query = st.text_input("Search for items", placeholder="e.g., 'laptop', 'air conditioner', 'good condition'")
 
         listings = st.session_state["listings"]
         if not listings:
             st.info("No items available yet.")
         else:
-            # Use semantic search if query provided, otherwise show all
+            # Simple text search in title and description
             if search_query:
-                filtered = semantic_search_listings(search_query, limit=20)
-                if not filtered:
-                    # Fallback to basic text search
-                    filtered = [item for item in listings if search_query.lower() in item["title"].lower() or search_query.lower() in item["description"].lower()]
+                filtered = [item for item in listings 
+                           if search_query.lower() in item["title"].lower() 
+                           or search_query.lower() in item["description"].lower()]
             else:
                 filtered = listings
 
             if not filtered:
                 st.warning("No items match your search.")
             else:
+                st.write(f"Found {len(filtered)} items")
                 cols = st.columns(2)
                 for idx, item in enumerate(filtered):
                     with cols[idx % 2]:
-                        if st.button(f"{item['title']}"):
+                        if st.button(f"{item['title']}", key=f"basic_search_{idx}"):
                             popup_dial(item)
                         st.markdown(
                             f"""
-                            <div class='listing-card'>
+                            <div style='border: 1px solid #ddd; padding: 10px; margin: 5px; border-radius: 5px;'>
                                 <h4>{item['title']}</h4>
                                 <p><b>${item['price']}</b></p>
                                 <p>{item['category']} | {item['condition']}</p>

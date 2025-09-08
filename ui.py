@@ -51,20 +51,24 @@ st.markdown(
         background-color: #FF5A5F;
         color: white !important;
     }
+
     </style>
     """,
     unsafe_allow_html=True
 )
 
 # --- Sidebar navigation with emojis ---
-st.sidebar.title("E-Commerce App")
+st.sidebar.title("🤝 Kairos Connector")
+st.sidebar.caption("AI-powered campus marketplace")
 
-# Define pages
+
+
+# Define pages with clear descriptions
 pages = {
-    "🏠 Home": "Home",
-    "🔍 Browse": "Browse",
-    "➕ Post Item": "Post Item",
-    "👤 My Listings": "My Listings",
+    "🏠 Start Here": "Home",
+    "🔍 Find Items": "Browse", 
+    "📝 List Items": "Post Item",
+    "📋 My Listings": "My Listings",
 }
 
 # Track active page in session state

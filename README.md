@@ -1,6 +1,6 @@
-# Kairos Agentic AI Marketplace 2025
+# Kairos Agentic AI Campus Connector 2025
 
-AI-powered university marketplace with semantic search, deal evaluation, and persistent data storage.
+AI-powered university marketplace connector with semantic search, market analysis, and direct student-to-student connections.
 
 ## Features
 
@@ -19,7 +19,7 @@ AI-powered university marketplace with semantic search, deal evaluation, and per
 ### 🎯 User Experience
 - **Multi-User Support**: Switch between Adam, Bob, Charlie profiles
 - **Auto-Refresh**: Seamless data updates without manual refresh
-- **Image Handling**: Compression and base64 storage
+- **Direct Contact**: Connect students with sellers for safe campus transactions
 - **Demo Data**: Quick-fill functionality for testing
 
 ## Setup
@@ -72,16 +72,16 @@ streamlit run ui.py
 ## Usage
 
 ### Core Workflows
-1. **Browse Listings**: View all marketplace items with semantic search
-2. **Post Items**: Create listings with optional AI description generation
+1. **Discover Items**: Find what you need with AI-powered semantic search
+2. **List Items**: Share what you're offering with AI description generation
 3. **My Listings**: Manage your posted items with edit/delete capabilities
-4. **Deal Evaluation**: Get AI-powered market analysis for pricing decisions
+4. **Market Analysis**: Get AI-powered insights for fair pricing decisions
 
 ### AI Features
-- **Smart Descriptions**: Toggle AI writeup when posting items
-- **Market Analysis**: Compare your item against web + internal market data
-- **Semantic Search**: Find similar items using natural language queries
-- **Price Recommendations**: AI-suggested pricing based on market analysis
+- **Smart Descriptions**: Toggle AI writeup when listing items
+- **Market Intelligence**: Compare your item against web + campus market data
+- **Semantic Discovery**: Find exactly what you need using natural language
+- **Fair Pricing**: AI-suggested pricing based on market analysis
 
 ## Architecture
 

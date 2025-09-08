@@ -17,5 +17,6 @@ def get_demo_data():
         "price_negotiable": "Yes",
         "university": "NUS",
         "address": "Block 15, Room 204",
-        "delivery_option": "Buyer Pickup"
+        "delivery_option": "Buyer Pickup",
+        "seller_email": "student.seller@u.nus.edu"
     }

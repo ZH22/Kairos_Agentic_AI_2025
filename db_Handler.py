@@ -70,7 +70,11 @@ class DbHandler:
     del data['image']
     del data['date_posted']
     data['user'] = userid
-    data['image_base64'] = b64_img 
+    data['image_base64'] = b64_img
+    
+    # Add seller_email if provided
+    if 'seller_email' not in data:
+        data['seller_email'] = None 
 
     # Save to main database
     response = (self.db_client.table("listing")
@@ -115,7 +119,11 @@ class DbHandler:
     del data['image']
     del data['date_posted']
     data['user'] = userid
-    data['image_base64'] = b64_img 
+    data['image_base64'] = b64_img
+    
+    # Add seller_email if provided
+    if 'seller_email' not in data:
+        data['seller_email'] = None 
 
     # Save to main database
     response = (self.db_client.table("listing")

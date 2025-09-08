@@ -13,7 +13,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'S
 # from Collector_Polisher import Collector
 from Seller_Workflow.description_writer import Writer
 def display():
-    st.title("Post a New Item")
+    st.title("List Your Item")
+    st.caption("Share what you're offering with fellow students - they'll contact you directly to arrange pickup")
     
     # Demo button
     if st.button("🎯 Fill Demo Data (Portable Aircon)", help="Click to fill all fields with sample data for testing"):
@@ -66,6 +67,14 @@ def display():
     custom_delivery_option = ""
     if delivery_option == "Other":
         custom_delivery_option = st.text_input("Please describe your delivery option", help="Describe your custom delivery arrangement.")
+    
+    # Contact email field
+    seller_email = st.text_input(
+        "Contact Email", 
+        value=st.session_state.get("demo_seller_email", ""),
+        placeholder="your.email@university.edu",
+        help="Buyers will use this email to contact you directly. Use your preferred email address."
+    )
 
     # Store all data fields in a dictionary before Item Description
     item_data_for_writer = {
@@ -102,9 +111,10 @@ def display():
             missing.append("User")
         if not condition:
             missing.append("Condition")
-
         if not age:
             missing.append("Age")
+        if not seller_email:
+            missing.append("Contact Email")
         return missing
 
     if use_ai:
@@ -141,7 +151,7 @@ def display():
     else:
         description = st.text_area("Description")
     
-    if st.button("Evaluate Your Deal!"):
+    if st.button("Get Market Analysis!"):
         missing_fields = get_missing_fields()
         if missing_fields:
             st.error(f"Please fill all required fields before evaluation. Missing: {', '.join(missing_fields)}")
@@ -185,6 +195,7 @@ def display():
                 "category": category,
                 "condition": condition,
                 "description": description,
+                "seller_email": seller_email,
                 "image": small_img_bytes if small_img_bytes else None,
                 "date_posted": datetime.datetime.now()
             }
@@ -200,5 +211,5 @@ def display():
                 del st.session_state.page_loaded_mylistings
             if "page_loaded_browse" in st.session_state:
                 del st.session_state.page_loaded_browse
-            st.success("Item posted successfully and synced with database!")
+            st.success("Item listed successfully! Fellow students can now discover and contact you directly.")
 
