@@ -6,6 +6,17 @@ from Buyer_Workflow.search_agents import validate_query, buyer_search_workflow
 from db_Handler import DbHandler
 import re
 
+@st.dialog("Item Details")
+def popup_dial(item):
+    st.subheader(item["title"])
+    if item["image"]:
+        st.image(item["image"], width=200)
+    st.write(f"**Price:** ${item['price']}")
+    st.write(f"**Category:** {item['category']}")
+    st.write(f"**Condition:** {item['condition']}")
+    st.write(f"**Description:** {item['description']}")
+
+
 
 def display():
     # Initialize database handler
@@ -66,8 +77,8 @@ def display():
                 cols = st.columns(2)
                 for idx, item in enumerate(filtered):
                     with cols[idx % 2]:
-                        if st.button(f"{item['title']}", key=f"card_{idx}"):
-                            st.session_state["selected_item"] = idx
+                        if st.button(f"{item['title']}"):
+                            popup_dial(item)
                         st.markdown(
                             f"""
                             <div class='listing-card'>
@@ -78,17 +89,6 @@ def display():
                             """,
                             unsafe_allow_html=True
                         )
-
-            if "selected_item" in st.session_state:
-                sel = st.session_state["selected_item"]
-                st.markdown("---")
-                st.subheader(listings[sel]["title"])
-                if listings[sel]["image"] is not None:
-                    st.image(listings[sel]["image"], width=200)
-                st.write(f"Price: ${listings[sel]['price']}")
-                st.write(f"Category: {listings[sel]['category']}")
-                st.write(f"Condition: {listings[sel]['condition']}")
-                st.write(f"Description: {listings[sel]['description']}")
 
     with tab3:
         st.subheader("🎯 Smart Search")
