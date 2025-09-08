@@ -16,6 +16,58 @@ from db_Handler import DbHandler
 # SYSTEM PROMPTS
 # =============================================================================
 
+QUERY_PROCESSOR_SYSTEM_PROMPT = """
+## Your Role
+
+You are the Query Processor Agent. Your primary responsibility is to evaluate if user queries have sufficient detail for precision matching, and either structure them or request more information.
+
+## Input Context
+
+You will receive raw user queries in natural language describing what they're looking for.
+
+## Key Responsibilities
+
+- Evaluate if the query has enough specificity for effective matching
+- For sufficient queries: structure into standardized format
+- For insufficient queries: identify what information is missing and ask for it
+
+## Decision Criteria for Sufficient Queries
+
+A query is SUFFICIENT if it includes:
+- Clear item type/category
+- At least 2 of: budget/price range, condition preference, brand preference, specific requirements
+
+## Output Requirements
+
+**For SUFFICIENT queries, provide:**
+STATUS: SUFFICIENT
+
+**Item Title:** [Main item type user is looking for]
+
+**Preferences:**
+- [Specific requirement 1]
+- [Specific requirement 2]
+- [Specific requirement 3]
+- [etc.]
+
+**For INSUFFICIENT queries, provide:**
+STATUS: NEEDS_MORE_INFO
+
+**Missing Information:**
+To help you find the perfect match, could you please specify:
+- What's your budget range? (e.g., under $500, $200-800)
+- What condition are you looking for? (new, like new, used, any condition)
+- Any preferred brands or specific features?
+- Where would you prefer pickup? (NUS, NTU, etc.)
+
+**Examples:**
+Query: "I want a laptop" → Ask: Budget range? Gaming/work/study use? Brand preference? Condition?
+Query: "water bottle" → Ask: What size? Insulated or regular? Budget range? Material preference?
+Query: "textbook" → Ask: What subject? Specific title/author? Budget? Condition acceptable?
+
+Always provide 3-4 specific, actionable questions relevant to the item type.
+"""
+
 SEARCH_ANALYZER_SYSTEM_PROMPT = """
 ## Your Role
 
@@ -24,13 +76,13 @@ You are the Search Analyzer Agent in a buyer workflow. Your primary responsibili
 ## Input Context
 
 You will receive:
-- User's search preferences and requirements (semi-structured prompt)
-- Listings retrieved from semantic search via query_try tool
+- Structured user preferences with Item Title and Preferences list
+- Access to semantic_search_tool for finding relevant listings
 
 ## Key Responsibilities
 
-- Use the semantic_search_tool to find relevant listings based on user preferences
-- Analyze each retrieved listing against user's specific requirements
+- Use the Item Title for targeted semantic search via semantic_search_tool
+- Analyze each retrieved listing against the specific user preferences
 - Evaluate match quality considering price, condition, category, location, etc.
 - Provide a concise summary for each listing explaining the match quality
 
@@ -132,12 +184,153 @@ def semantic_search_tool(user_query: str, limit: int = 10):
         return {"error": f"Search failed: {str(e)}"}
 
 # =============================================================================
+# FALLBACK QUESTIONS
+# =============================================================================
+
+FALLBACK_QUESTIONS = {
+    "laptop": [
+        "What's your budget range? (e.g., under $800, $500-1000)",
+        "What will you use it for? (gaming, work, study, programming)",
+        "Any preferred brands? (Apple, Dell, HP, Lenovo, etc.)",
+        "What condition are you looking for? (new, like new, used)"
+    ],
+    "phone": [
+        "What's your budget range?",
+        "Any preferred brands? (iPhone, Samsung, Google, etc.)",
+        "What condition are you looking for?",
+        "Any specific features needed? (camera quality, storage, etc.)"
+    ],
+    "furniture": [
+        "What's your budget range?",
+        "What size/dimensions do you need?",
+        "What condition are you looking for?",
+        "Where would you prefer pickup? (NUS, NTU, etc.)"
+    ],
+    "textbook": [
+        "What subject are you looking for?",
+        "Do you need a specific title or author?",
+        "What's your budget range?",
+        "What condition is acceptable? (new, used, any condition)"
+    ],
+    "electronics": [
+        "What's your budget range?",
+        "What condition are you looking for?",
+        "Any preferred brands?",
+        "Where would you prefer pickup?"
+    ],
+    "clothing": [
+        "What size do you need?",
+        "What's your budget range?",
+        "Any preferred brands or styles?",
+        "What condition are you looking for?"
+    ],
+    "default": [
+        "What's your budget range?",
+        "What condition are you looking for? (new, like new, used)",
+        "Any specific requirements or preferences?",
+        "Where would you prefer pickup? (NUS, NTU, etc.)"
+    ]
+}
+
+def detect_item_category(query):
+    """Detect item category from user query for fallback questions"""
+    query_lower = query.lower()
+    
+    # Electronics
+    if any(word in query_lower for word in ['laptop', 'macbook', 'computer', 'pc']):
+        return 'laptop'
+    if any(word in query_lower for word in ['phone', 'iphone', 'samsung', 'mobile']):
+        return 'phone'
+    if any(word in query_lower for word in ['tv', 'monitor', 'speaker', 'headphone', 'camera']):
+        return 'electronics'
+    
+    # Furniture
+    if any(word in query_lower for word in ['chair', 'table', 'desk', 'bed', 'sofa', 'furniture']):
+        return 'furniture'
+    
+    # Books
+    if any(word in query_lower for word in ['textbook', 'book', 'novel', 'manual']):
+        return 'textbook'
+    
+    # Clothing
+    if any(word in query_lower for word in ['shirt', 'pants', 'dress', 'jacket', 'shoes', 'clothing']):
+        return 'clothing'
+    
+    return 'default'
+
+def generate_fallback_questions(query):
+    """Generate fallback questions based on item category"""
+    category = detect_item_category(query)
+    questions = FALLBACK_QUESTIONS.get(category, FALLBACK_QUESTIONS['default'])
+    
+    formatted_questions = "To help you find the perfect match, could you please specify:\n"
+    for question in questions:
+        formatted_questions += f"- {question}\n"
+    
+    return formatted_questions.strip()
+
+# =============================================================================
 # AGENT CLASSES
 # =============================================================================
 
+class QueryProcessorAgent:
+    """
+    Agent 1: Processes raw user queries into structured format
+    """
+    def __init__(self):
+        self.agent = Agent(
+            system_prompt=QUERY_PROCESSOR_SYSTEM_PROMPT,
+            model=small_model
+        )
+
+    def process(self, raw_query: str):
+        """
+        Process raw user query and evaluate specificity
+        Args:
+            raw_query: Natural language user query
+        Returns:
+            Dict with status and either structured_query or clarification_request
+        """
+        try:
+            response = str(self.agent(raw_query))
+            
+            if "STATUS: SUFFICIENT" in response:
+                return {
+                    "status": "SUFFICIENT",
+                    "structured_query": response.replace("STATUS: SUFFICIENT\n\n", "")
+                }
+            elif "STATUS: NEEDS_MORE_INFO" in response:
+                # AI agent successfully identified insufficient query - use its response
+                if "**Missing Information:**" in response:
+                    missing_info_section = response.split("**Missing Information:**\n")[1]
+                    return {
+                        "status": "NEEDS_MORE_INFO",
+                        "clarification_request": missing_info_section.strip()
+                    }
+                else:
+                    # AI provided NEEDS_MORE_INFO but no proper format - use its full response
+                    return {
+                        "status": "NEEDS_MORE_INFO",
+                        "clarification_request": response.replace("STATUS: NEEDS_MORE_INFO\n\n", "")
+                    }
+            else:
+                # AI response doesn't match expected format - this is an AI failure
+                # Use fallback only in this case
+                return {
+                    "status": "NEEDS_MORE_INFO",
+                    "clarification_request": generate_fallback_questions(raw_query)
+                }
+                
+        except Exception as e:
+            # AI agent completely failed - use fallback
+            return {
+                "status": "NEEDS_MORE_INFO",
+                "clarification_request": generate_fallback_questions(raw_query)
+            }
+
 class SearchAnalyzerAgent:
     """
-    Agent 1: Analyzes listings from semantic search against user preferences
+    Agent 2: Analyzes listings from semantic search against user preferences
     """
     def __init__(self):
         self.agent = Agent(
@@ -146,20 +339,20 @@ class SearchAnalyzerAgent:
             tools=[semantic_search_tool]
         )
 
-    def analyze(self, user_preferences: str):
+    def analyze(self, structured_preferences: str):
         """
-        Analyze listings based on user preferences
+        Analyze listings based on structured user preferences
         Args:
-            user_preferences: Semi-structured prompt with user requirements
+            structured_preferences: Structured query from QueryProcessor
         Returns:
             Analysis summaries for each listing
         """
-        prompt = f"User Preferences:\n{user_preferences}\n\nUse semantic_search_tool to find relevant listings and analyze each one."
+        prompt = f"Structured User Query:\n{structured_preferences}\n\nUse semantic_search_tool with the Item Title to find relevant listings and analyze each against the Preferences."
         return self.agent(prompt)
 
 class RankingAgent:
     """
-    Agent 2: Ranks analyzed listings and provides top 3 recommendations
+    Agent 3: Ranks analyzed listings and provides top 3 recommendations
     """
     def __init__(self):
         self.agent = Agent(
@@ -183,22 +376,33 @@ class RankingAgent:
 # WORKFLOW ORCHESTRATION
 # =============================================================================
 
-def buyer_search_workflow(user_preferences: str):
+def validate_query(raw_user_query: str):
     """
-    Orchestrates the buyer search workflow
+    Validates if user query has sufficient detail for precision matching
     Args:
-        user_preferences: Semi-structured prompt with user search requirements
+        raw_user_query: Natural language user query
+    Returns:
+        Dict with validation result and either structured_query or clarification_request
+    """
+    query_processor = QueryProcessorAgent()
+    return query_processor.process(raw_user_query)
+
+def buyer_search_workflow(structured_query: str):
+    """
+    Orchestrates the 2-agent buyer search workflow (assumes query is already validated)
+    Args:
+        structured_query: Pre-validated and structured user query
     Returns:
         Top 3 listing recommendations
     """
-    # Step 1: Search and analyze listings
+    # Step 1: Search and analyze listings using structured query
     search_analyzer = SearchAnalyzerAgent()
-    analysis_results = search_analyzer.analyze(user_preferences)
+    analysis_results = search_analyzer.analyze(structured_query)
     analysis_text = str(analysis_results) if hasattr(analysis_results, '__str__') else analysis_results
     
     # Step 2: Rank and recommend top 3
     ranking_agent = RankingAgent()
-    recommendations = ranking_agent.rank(user_preferences, analysis_text)
+    recommendations = ranking_agent.rank(structured_query, analysis_text)
     final_recommendations = str(recommendations) if hasattr(recommendations, '__str__') else recommendations
     
     return final_recommendations
