@@ -1,8 +1,8 @@
 import streamlit as st
-from commons import categories_list
-from Buyer_Workflow.browse_ai import generate_ai_response
-from Buyer_Workflow.search_agents import validate_query, buyer_search_workflow
-from db_Handler import DbHandler
+from src.ui.helpers.commons import categories_list
+from src.ai_workflows.buyer.browse_ai import generate_ai_response
+from src.ai_workflows.buyer.search_agents import validate_query, buyer_search_workflow
+from src.core.db_handler import DbHandler
 import re
 
 @st.dialog("Item Details")
@@ -34,25 +34,28 @@ def display():
         st.subheader("Chat with Kairos AI")
         st.caption("This is an AI-assisted search. Chat with AI to improve search. Click search when done.")   
         
+        # Chat controls
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("🔄 Clear Chat", help="Start fresh conversation"):
+                st.session_state.chat_history = []
+                st.rerun()
+        
         # Explanatory dropdown
         with st.expander("ℹ️ How to use AI Chat effectively", expanded=False):
             st.markdown("""
             **🎯 AI Chat Function & Value:**
+            - Remembers your conversation to provide contextual responses
             - Helps you discover exactly what you need through conversation
             - Connects to Smart Search for personalized recommendations
             - Learns your preferences to find better matches
             
-            **🔄 Restart Button Usage:**
+            **🔄 Clear Chat Usage:**
             - Use when switching to a completely different item category
             - Helpful when starting fresh after finding what you need
             - Clears conversation to avoid confusion between different searches
             
-            **⚠️ Restart Button Warnings:**
-            - **Loses all conversation history** - previous chat will be deleted
-            - **Forgets discovered preferences** - AI won't remember your requirements
-            - **Breaks conversation flow** - use only when truly starting over
-            
-            💡 **Tip:** Continue the conversation instead of restarting unless you're looking for something completely different!
+            💡 **Tip:** The AI remembers your previous messages, so you can build on the conversation!
             """)
         
         with st.container(height = 300):
@@ -67,7 +70,7 @@ def display():
         prompt = st.chat_input("Ask me anything...")
         if prompt:
             st.session_state.chat_history.append(("user", prompt))
-            ai_reply = generate_ai_response(prompt)
+            ai_reply = generate_ai_response(prompt, st.session_state.chat_history[:-1])  # Exclude current message
             st.session_state.chat_history.append(("assistant", ai_reply))
             st.rerun()
 

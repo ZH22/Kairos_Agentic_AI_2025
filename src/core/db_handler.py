@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 import supabase
 import streamlit as st
-from helper_scripts.image_helper import image_to_base64
+from src.utils.image_helper import image_to_base64
 from datetime import datetime
 import base64
 

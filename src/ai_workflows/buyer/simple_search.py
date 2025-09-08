@@ -1,8 +1,7 @@
 # Simplified semantic search for UI integration
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from db_Handler import DbHandler
+from src.core.db_handler import DbHandler
 
 def semantic_search_listings(query: str, limit: int = 20):
     """

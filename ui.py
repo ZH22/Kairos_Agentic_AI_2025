@@ -10,14 +10,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import UI Element Files
-import sys
-sys.path.append("ui")
-from ui.commons import init_keys
-import ui.home_ui as home_ui
-import ui.browse_ui as browse_ui
-import ui.postItem_ui as postItem_ui
-import ui.myListings_ui as myListings_ui
-from ui.help_system import contextual_help_system
+from src.ui.helpers.commons import init_keys
+import src.ui.pages.home_ui as home_ui
+import src.ui.pages.browse_ui as browse_ui
+import src.ui.pages.postItem_ui as postItem_ui
+import src.ui.pages.myListings_ui as myListings_ui
+from src.ui.components.help_system import contextual_help_system
 
 
 # Initialize session state storage if not exists
@@ -86,7 +84,7 @@ page = st.session_state.active_page
 
 # --- Evaluation Page (Special handling) ---
 if page == "evaluation":
-    import ui.evaluation_ui as evaluation_ui
+    import src.ui.pages.evaluation_ui as evaluation_ui
     contextual_help_system("evaluation")
     evaluation_ui.display()
 

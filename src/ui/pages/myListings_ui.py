@@ -1,6 +1,6 @@
 import streamlit as st
-from commons import categories_list
-from db_Handler import DbHandler
+from src.ui.helpers.commons import categories_list
+from src.core.db_handler import DbHandler
 
 def display():
     # Initialize database handler

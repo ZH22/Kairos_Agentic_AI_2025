@@ -192,7 +192,7 @@ def semantic_db_search(user_info: str = "", custom_query: str = "", category: st
         import sys
         import os
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-        from db_Handler import DbHandler
+        from src.core.db_handler import DbHandler
         
         db = DbHandler()
         

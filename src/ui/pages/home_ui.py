@@ -1,15 +1,14 @@
 import streamlit as st
-from db_Handler import DbHandler
-from commons import init_keys
+from src.core.db_handler import DbHandler
+from src.ui.helpers.commons import init_keys
 
-from ui_helper.toast import show_toast, add_toast;
+# Toast functionality removed for restructuring
 
 def display():
 
     sst = st.session_state
 
-    # Shows toast on rerun (if applicable)
-    show_toast()
+    # Toast functionality removed for restructuring
 
     # Init Db Handler object
     db = DbHandler()
@@ -70,7 +69,7 @@ def display():
         sst["selected_user"] = option
     elif option != sst["selected_user"]:
         sst["selected_user"] = option
-        add_toast(f"User Changed to : { option }")
+        st.success(f"User Changed to: {option}")
         st.rerun()
     
     # (Note: Did not use 'key' property in selectBox as 

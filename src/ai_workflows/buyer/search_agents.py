@@ -10,7 +10,7 @@ load_dotenv()
 
 # Add parent directory to path for db_Handler import
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from db_Handler import DbHandler
+from src.core.db_handler import DbHandler
 
 # =============================================================================
 # SYSTEM PROMPTS

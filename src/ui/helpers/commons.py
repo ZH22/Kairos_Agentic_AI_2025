@@ -1,5 +1,5 @@
 import streamlit as st
-from db_Handler import DbHandler
+from src.core.db_handler import DbHandler
 
 # Predefined categories
 categories_list = [

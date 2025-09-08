@@ -2,9 +2,8 @@ import streamlit as st
 import sys
 import os
 import time
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Seller_Workflow')))
-from market_agents import WebsearchAgent, MarketAnalyzer
-from synthesis_agent import SynthesisAgent
+from src.ai_workflows.seller.market_agents import WebsearchAgent, MarketAnalyzer
+from src.ai_workflows.seller.synthesis_agent import SynthesisAgent
 from contextlib import contextmanager
 
 def display():
@@ -261,7 +260,7 @@ Price Negotiable: {user_info.get('price_negotiable', 'N/A')}
             # Post Item button
             if st.button("📤 Post This Item", use_container_width=True):
                 import datetime
-                from db_Handler import DbHandler
+                from src.core.db_handler import DbHandler
                 
                 item_data = st.session_state.user_info.copy()
                 item_data.update({

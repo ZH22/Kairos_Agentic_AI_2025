@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from strands import Agent
 from strands.models import BedrockModel
-from db_Handler import DbHandler
+from src.core.db_handler import DbHandler
 
 CHAT_SYSTEM_PROMPT = """
 You are Kairos AI, a need clarification specialist for a university marketplace. Your role is to:
@@ -31,32 +31,28 @@ Respond: "It sounds like you know exactly what you want! Try the 'Smart Search' 
 Be friendly and conversational. Focus on helping users clarify their needs rather than searching for items.
 """
 
-def generate_ai_response(user_message):
-    """Generate AI response for chat using available listings context"""
+def generate_ai_response(user_message, chat_history=None):
+    """Generate AI response for chat using conversation history and listings context"""
     try:
         model = BedrockModel(
             model_id="us.anthropic.claude-3-5-haiku-20241022-v1:0",
             temperature=0.7,
         )
 
-        # Get k-nearest listings using vector embeddings semantic search
-        db = DbHandler()
-        top_k_ids = db.query_try(user_message, 10)
+        # Build conversation context from history
+        conversation_context = ""
+        if chat_history:
+            conversation_context = "\n\nPrevious conversation:\n"
+            for role, msg in chat_history[-6:]:  # Last 6 messages for context
+                conversation_context += f"{role.title()}: {msg}\n"
         
-        # Get full listing details (handle empty/stale results)
-        if top_k_ids:
-            filtered_listings = db.get_listings(top_k_ids)
-        else:
-            filtered_listings = [] 
-        
-        # For need clarification, we don't need full listing context
-        # Just provide basic marketplace info if user asks general questions
         context_prompt = f"""
-            User message: {user_message}
+            Current user message: {user_message}{conversation_context}
 
             Help the user clarify their needs or answer their question about the marketplace.
             If they have specific, detailed requirements, direct them to use Smart Search.
             If they have vague needs, ask clarifying questions to help them be more specific.
+            Use the conversation history to provide contextual responses and avoid repeating questions.
             """
         
         agent = Agent(
