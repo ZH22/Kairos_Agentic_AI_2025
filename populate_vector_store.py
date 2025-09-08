@@ -1,28 +1,31 @@
+#!/usr/bin/env python3
 """
-One-time script to populate vector store with existing listings
-Run this to enable semantic search for existing data
+Populate Vector Store Script
+One-time setup to populate vector store with existing listings
 """
 
 from db_Handler import DbHandler
-from dotenv import load_dotenv
 
 def main():
-    print("🚀 Starting Vector Store Population...")
+    """Populate vector store with existing listings"""
+    print("Populating vector store...")
     
-    # Load environment variables
-    load_dotenv()
-    
-    # Initialize database handler
     db = DbHandler()
     
-    # Populate vector store with existing listings
-    success = db.populate_vector_store_from_existing()
+    # Get all listings
+    listings = db.get_listings()
+    print(f"Found {len(listings)} listings to process")
     
-    if success:
-        print("✅ Vector store population completed successfully!")
-        print("🔍 Semantic search is now enabled for all listings")
-    else:
-        print("❌ Vector store population failed - check logs above")
+    # Add each to vector store
+    for listing in listings:
+        if listing.get('id'):
+            try:
+                db._add_to_vector_store(listing, listing['id'])
+                print(f"Added listing {listing['id']}: {listing.get('title', 'Unknown')}")
+            except Exception as e:
+                print(f"Error adding listing {listing['id']}: {e}")
+    
+    print("Vector store population complete!")
 
 if __name__ == "__main__":
     main()

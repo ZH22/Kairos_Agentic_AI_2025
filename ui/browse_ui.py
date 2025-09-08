@@ -14,6 +14,7 @@ def popup_dial(item):
     st.write(f"**Category:** {item['category']}")
     st.write(f"**Condition:** {item['condition']}")
     st.write(f"**Description:** {item['description']}")
+    st.write(f"**📧 Contact:** {item.get('seller_email', 'Email not provided')}")
 
 
 
@@ -27,12 +28,33 @@ def display():
         st.session_state.listings = db.get_listings()
         st.session_state.page_loaded_browse = True
 
-    tab1, tab2, tab3 = st.tabs(["💬 Chat", "🔍 Basic Search", "🤖 AI Search"])
+    tab1, tab2, tab3 = st.tabs(["💬 Chat", "🔍 Search", "🤖 AI Recommendations"])
     
     with tab1:
         st.subheader("Chat with Kairos AI")
         st.caption("This is an AI-assisted search. Chat with AI to improve search. Click search when done.")   
-        prompt = st.chat_input("Ask me anything...")
+        
+        # Explanatory dropdown
+        with st.expander("ℹ️ How to use AI Chat effectively", expanded=False):
+            st.markdown("""
+            **🎯 AI Chat Function & Value:**
+            - Helps you discover exactly what you need through conversation
+            - Connects to Smart Search for personalized recommendations
+            - Learns your preferences to find better matches
+            
+            **🔄 Restart Button Usage:**
+            - Use when switching to a completely different item category
+            - Helpful when starting fresh after finding what you need
+            - Clears conversation to avoid confusion between different searches
+            
+            **⚠️ Restart Button Warnings:**
+            - **Loses all conversation history** - previous chat will be deleted
+            - **Forgets discovered preferences** - AI won't remember your requirements
+            - **Breaks conversation flow** - use only when truly starting over
+            
+            💡 **Tip:** Continue the conversation instead of restarting unless you're looking for something completely different!
+            """)
+        
         with st.container(height = 300):
             # Full-width chat
             if "chat_history" not in st.session_state:
@@ -42,29 +64,37 @@ def display():
                 with st.chat_message(role):
                     st.write(msg)
 
-            if prompt:
-                st.session_state.chat_history.append(("user", prompt))
-                with st.chat_message("user"):
-                    st.write(prompt)
-
-                ai_reply = generate_ai_response(prompt)
-                st.session_state.chat_history.append(("assistant", ai_reply))
-                with st.chat_message("assistant"):
-                    st.write(ai_reply)
+        prompt = st.chat_input("Ask me anything...")
+        if prompt:
+            st.session_state.chat_history.append(("user", prompt))
+            ai_reply = generate_ai_response(prompt)
+            st.session_state.chat_history.append(("assistant", ai_reply))
+            st.rerun()
 
     with tab2:
         st.subheader("Browse All Listings")
-        search_query = st.text_input("Search for items", placeholder="e.g., 'laptop', 'air conditioner', 'good condition'")
+        search_query = st.text_input("🔍 Semantic Search", placeholder="e.g., 'MacBook for programming', 'cooling device for dorm', 'gaming setup'")
+        st.caption("💡 Uses AI to understand your intent - try natural language descriptions!")
 
         listings = st.session_state["listings"]
         if not listings:
             st.info("No items available yet.")
         else:
-            # Simple text search in title and description
+            # Semantic search if query provided, otherwise show all
             if search_query:
-                filtered = [item for item in listings 
-                           if search_query.lower() in item["title"].lower() 
-                           or search_query.lower() in item["description"].lower()]
+                try:
+                    # Use semantic search to get relevant listing IDs
+                    similar_ids = db.query_try(search_query, len(listings))
+                    # Filter listings to match semantic search results in order
+                    filtered = [item for item in listings if item.get('id') in similar_ids]
+                    # Sort by semantic similarity (order from query_try)
+                    filtered.sort(key=lambda x: similar_ids.index(x.get('id')) if x.get('id') in similar_ids else len(similar_ids))
+                except Exception as e:
+                    st.warning(f"Semantic search failed, using basic search: {str(e)}")
+                    # Fallback to basic search
+                    filtered = [item for item in listings 
+                               if search_query.lower() in item["title"].lower() 
+                               or search_query.lower() in item["description"].lower()]
             else:
                 filtered = listings
 
@@ -83,6 +113,7 @@ def display():
                                 <h4>{item['title']}</h4>
                                 <p><b>${item['price']}</b></p>
                                 <p>{item['category']} | {item['condition']}</p>
+                                <p>📧 {item.get('seller_email', 'Email not provided')}</p>
                             </div>
                             """,
                             unsafe_allow_html=True
@@ -257,6 +288,7 @@ def display():
                                     st.markdown(f"**Condition:** {matching_listing['condition']} | **Brand:** {matching_listing.get('brand', 'N/A')}")
                                     st.markdown(f"**Category:** {matching_listing['category']} | **Age:** {matching_listing.get('age', 'N/A')} months")
                                     st.markdown(f"**Location:** {matching_listing.get('university', 'N/A')} | **Seller:** {matching_listing.get('user', 'N/A')}")
+                                    st.markdown(f"**📧 Contact:** {matching_listing.get('seller_email', 'Email not provided')}")
                                 
                                 with col2:
                                     if matching_listing.get("image"):

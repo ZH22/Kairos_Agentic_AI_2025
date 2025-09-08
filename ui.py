@@ -17,6 +17,7 @@ import ui.home_ui as home_ui
 import ui.browse_ui as browse_ui
 import ui.postItem_ui as postItem_ui
 import ui.myListings_ui as myListings_ui
+from ui.help_system import contextual_help_system
 
 
 # Initialize session state storage if not exists
@@ -86,20 +87,25 @@ page = st.session_state.active_page
 # --- Evaluation Page (Special handling) ---
 if page == "evaluation":
     import ui.evaluation_ui as evaluation_ui
+    contextual_help_system("evaluation")
     evaluation_ui.display()
 
 # --- Home ---
 elif page == "Home":
+    contextual_help_system("home")
     home_ui.display()
 
 # --- Browse Page (Chat + Toggle Search Listings) ---
 elif page == "Browse":
+    contextual_help_system("browse")
     browse_ui.display()
 
 # --- Post Item ---
 elif page == "Post Item":
+    contextual_help_system("post")
     postItem_ui.display()
     
 # --- My Listings ---
 elif page == "My Listings":
+    contextual_help_system("mylistings")
     myListings_ui.display()
